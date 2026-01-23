@@ -19,14 +19,14 @@ interface DashboardProps {
   onRejectRequest: (requestId: string) => void;
   onUpdatePlanDirectly: (studentId: string, modules: Module[]) => void;
   onAddUser: (user: User) => void;
+  onDeleteUser: (userId: string) => void;
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ 
-  user, onLogout, students, lecturers, plans, requests, dbError, onSeedData, onCreateRequest, onApproveRequest, onRejectRequest, onUpdatePlanDirectly, onAddUser
+  user, onLogout, students, lecturers, plans, requests, dbError, onSeedData, onCreateRequest, onApproveRequest, onRejectRequest, onUpdatePlanDirectly, onAddUser, onDeleteUser
 }) => {
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-slate-950">
-      {/* Navbar */}
       <header className="bg-slate-900 border-b border-slate-800 px-8 py-4 flex items-center justify-between shadow-2xl z-10">
         <div className="flex items-center space-x-3">
           <div className="bg-teal-600 w-10 h-10 rounded-lg flex items-center justify-center text-white font-black text-xl shadow-lg shadow-teal-500/20">F</div>
@@ -57,7 +57,6 @@ const Dashboard: React.FC<DashboardProps> = ({
         </div>
       </header>
 
-      {/* Main Content Area */}
       <main className="flex-1 overflow-auto bg-slate-950 p-8">
         {user.role === 'Student' && (
           <StudentView student={user} plan={plans[user.id]} />
@@ -84,6 +83,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             onRejectRequest={onRejectRequest}
             onUpdatePlanDirectly={onUpdatePlanDirectly}
             onAddUser={onAddUser}
+            onDeleteUser={onDeleteUser}
           />
         )}
       </main>
