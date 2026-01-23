@@ -13,7 +13,7 @@ const App: React.FC = () => {
   const [plans, setPlans] = useState<Record<string, StudyPlan>>({});
   const [requests, setRequests] = useState<ChangeRequest[]>([]);
   const [loading, setLoading] = useState(true);
-  const [dbConnected, setDbConnected] = useState(false);
+  const [dbError, setDbError] = useState<string | null>(null);
 
   // Sync with Supabase
   useEffect(() => {
@@ -22,23 +22,22 @@ const App: React.FC = () => {
 
   const fetchData = async () => {
     setLoading(true);
+    setDbError(null);
     try {
       // 1. Fetch Profiles
       const { data: profiles, error: pError } = await supabase.from('profiles').select('*');
       
       if (pError) {
-        console.error("Supabase Profile Fetch Error:", pError.message);
-        setDbConnected(false);
-      } else {
-        setDbConnected(true);
-      }
-
-      if (profiles && profiles.length > 0) {
+        console.error("Supabase Connection Warning:", pError.message);
+        setDbError(pError.message);
+        // Fallback immediately to mock data so you can still log in
+        setStudents(MOCK_STUDENTS);
+        setLecturers([...MOCK_LECTURERS, ...MOCK_ADMINS]);
+      } else if (profiles && profiles.length > 0) {
         setStudents(profiles.filter((u: User) => u.role === 'Student'));
         setLecturers(profiles.filter((u: User) => u.role === 'Lecturer' || u.role === 'Admin'));
       } else {
-        // Seed if empty (first run or connection issues)
-        console.warn("Using local mock data for session.");
+        // Table exists but is empty
         setStudents(MOCK_STUDENTS);
         setLecturers([...MOCK_LECTURERS, ...MOCK_ADMINS]);
       }
@@ -47,8 +46,8 @@ const App: React.FC = () => {
       const { data: spData } = await supabase.from('study_plans').select('*');
       const planMap: Record<string, StudyPlan> = {};
       
-      // Merge Mock Plans with SP Data
-      MOCK_STUDENTS.forEach(s => {
+      // Default mock plans
+      [...MOCK_STUDENTS].forEach(s => {
         planMap[s.id] = {
           id: `plan-${s.id}`,
           studentId: s.id,
@@ -58,15 +57,18 @@ const App: React.FC = () => {
         };
       });
 
-      spData?.forEach(item => {
-        planMap[item.student_id] = {
-          id: item.id,
-          studentId: item.student_id,
-          modules: item.modules,
-          lastUpdated: item.last_updated,
-          updatedBy: item.updated_by
-        };
-      });
+      if (spData) {
+        spData.forEach(item => {
+          planMap[item.student_id] = {
+            id: item.id,
+            studentId: item.student_id,
+            modules: item.modules,
+            lastUpdated: item.last_updated,
+            // Fixed: updated_by changed to updatedBy to match StudyPlan interface
+            updatedBy: item.updated_by
+          };
+        });
+      }
       setPlans(planMap);
 
       // 3. Fetch Requests
@@ -83,8 +85,49 @@ const App: React.FC = () => {
         })));
       }
     } catch (err) {
-      console.error("Critical Fetch Error:", err);
-      setDbConnected(false);
+      console.error("Critical Sync Error:", err);
+      setDbError("Network connection lost or blocked.");
+      setStudents(MOCK_STUDENTS);
+      setLecturers([...MOCK_LECTURERS, ...MOCK_ADMINS]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSeedData = async () => {
+    setLoading(true);
+    try {
+      // 1. Clear existing (optional, but upsert handles it)
+      const allUsers = [...MOCK_STUDENTS, ...MOCK_LECTURERS, ...MOCK_ADMINS];
+      
+      // 2. Seed Profiles
+      const { error: profileError } = await supabase.from('profiles').upsert(
+        allUsers.map(u => ({
+          id: u.id,
+          name: u.name,
+          role: u.role,
+          password: PASS_KEY, // Default password for all
+          programme: u.programme || null,
+          intake: u.intake || null
+        }))
+      );
+
+      if (profileError) throw profileError;
+
+      // 3. Seed initial study plans for all students
+      for (const student of MOCK_STUDENTS) {
+        await supabase.from('study_plans').upsert({
+          student_id: student.id,
+          modules: INITIAL_MODULES,
+          last_updated: new Date().toISOString(),
+          updated_by: 'System Seed'
+        }, { onConflict: 'student_id' });
+      }
+
+      alert("Database successfully seeded with students, lecturers, and an admin!");
+      await fetchData();
+    } catch (err: any) {
+      alert("Seeding failed: " + err.message + ". Make sure you ran the SQL in the DB Setup tab first!");
     } finally {
       setLoading(false);
     }
@@ -136,7 +179,7 @@ const App: React.FC = () => {
   };
 
   const handleUpdatePlanDirectly = async (studentId: string, modules: Module[]) => {
-    await supabase
+    const { error } = await supabase
       .from('study_plans')
       .upsert({
         student_id: studentId,
@@ -145,6 +188,7 @@ const App: React.FC = () => {
         updated_by: currentUser?.name || 'Admin'
       }, { onConflict: 'student_id' });
     
+    if (error) console.error("Direct Update Error:", error);
     fetchData();
   };
 
@@ -171,7 +215,7 @@ const App: React.FC = () => {
     return (
       <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center">
         <div className="w-16 h-16 border-4 border-teal-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-        <p className="text-teal-500 font-black tracking-widest uppercase text-xs">Initializing Fahira Intelligence...</p>
+        <p className="text-teal-500 font-black tracking-widest uppercase text-xs">Initializing Fahira Systems...</p>
       </div>
     );
   }
@@ -179,7 +223,12 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
       {!currentUser ? (
-        <Login onLogin={handleLogin} students={students} lecturers={lecturers} />
+        <Login 
+          onLogin={handleLogin} 
+          students={students} 
+          lecturers={lecturers} 
+          dbStatus={dbError ? 'Offline' : 'Online'} 
+        />
       ) : (
         <Dashboard 
           user={currentUser} 
@@ -188,6 +237,8 @@ const App: React.FC = () => {
           lecturers={lecturers}
           plans={plans}
           requests={requests}
+          dbError={dbError}
+          onSeedData={handleSeedData}
           onCreateRequest={handleCreateRequest}
           onApproveRequest={handleApproveRequest}
           onRejectRequest={handleRejectRequest}

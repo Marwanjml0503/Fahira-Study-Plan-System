@@ -6,9 +6,10 @@ interface LoginProps {
   onLogin: (user: User) => void;
   students: User[];
   lecturers: User[];
+  dbStatus: 'Online' | 'Offline';
 }
 
-const Login: React.FC<LoginProps> = ({ onLogin, students, lecturers }) => {
+const Login: React.FC<LoginProps> = ({ onLogin, students, lecturers, dbStatus }) => {
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
@@ -32,31 +33,27 @@ const Login: React.FC<LoginProps> = ({ onLogin, students, lecturers }) => {
 
     const trimmedName = name.trim().toLowerCase();
     
-    // Find the user that matches name, password, AND has the correct role
+    // Explicit Role Matching for same-name accounts (e.g. Marwan Lecturer vs Marwan Admin)
     const user = usersToSearch.find(u => {
-      const nameMatch = u.name.trim().toLowerCase() === trimmedName;
-      const passMatch = u.password === password || (!u.password && password === "Cristiano");
+      const isNameMatch = u.name.trim().toLowerCase() === trimmedName;
+      const isPassMatch = u.password === password || (!u.password && password === "Cristiano");
       
-      // Role compatibility check:
-      // 1. If searching for Admin, must be Admin.
-      // 2. If searching for Lecturer, can be Lecturer OR Admin.
-      // 3. If searching for Student, must be Student.
-      let roleMatch = false;
+      let isRoleMatch = false;
       if (selectedRole === 'Admin') {
-        roleMatch = u.role === 'Admin';
+        isRoleMatch = u.role === 'Admin';
       } else if (selectedRole === 'Lecturer') {
-        roleMatch = u.role === 'Lecturer' || u.role === 'Admin';
-      } else {
-        roleMatch = u.role === 'Student';
+        isRoleMatch = u.role === 'Lecturer' || u.role === 'Admin';
+      } else if (selectedRole === 'Student') {
+        isRoleMatch = u.role === 'Student';
       }
 
-      return nameMatch && passMatch && roleMatch;
+      return isNameMatch && isPassMatch && isRoleMatch;
     });
 
     if (user) {
       onLogin(user);
     } else {
-      setError(`Authentication failed. No ${selectedRole} account found for "${name}" with that password.`);
+      setError(`Auth failed. No ${selectedRole} found with those credentials.`);
     }
   };
 
@@ -109,9 +106,8 @@ const Login: React.FC<LoginProps> = ({ onLogin, students, lecturers }) => {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
-                autoComplete="username"
                 className="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-800 text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all placeholder-slate-700"
-                placeholder="e.g. Marwan"
+                placeholder="Case insensitive"
               />
             </div>
             <div className="relative">
@@ -121,9 +117,8 @@ const Login: React.FC<LoginProps> = ({ onLogin, students, lecturers }) => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                autoComplete="current-password"
                 className="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-800 text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all placeholder-slate-700 pr-12"
-                placeholder="••••••••"
+                placeholder="Cristiano"
               />
               <button 
                 type="button"
@@ -144,11 +139,13 @@ const Login: React.FC<LoginProps> = ({ onLogin, students, lecturers }) => {
               type="submit"
               className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-4 rounded-xl transition-all shadow-lg hover:shadow-indigo-500/20 transform hover:scale-[1.02]"
             >
-              Authenticate with Supabase
+              Authenticate System
             </button>
           </form>
           <div className="bg-slate-950/50 px-8 py-4 text-center border-t border-slate-800/50">
-            <p className="text-slate-600 text-[10px] uppercase tracking-widest font-bold">Encrypted Database Link Active</p>
+            <p className="text-slate-600 text-[10px] uppercase tracking-widest font-bold">
+              Database: <span className={dbStatus === 'Online' ? 'text-teal-500' : 'text-orange-500'}>{dbStatus}</span>
+            </p>
           </div>
         </div>
       )}

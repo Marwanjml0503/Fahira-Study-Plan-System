@@ -12,6 +12,8 @@ interface DashboardProps {
   lecturers: User[];
   plans: Record<string, StudyPlan>;
   requests: ChangeRequest[];
+  dbError?: string | null;
+  onSeedData: () => Promise<void>;
   onCreateRequest: (request: Omit<ChangeRequest, 'id' | 'createdAt' | 'status'>) => void;
   onApproveRequest: (requestId: string) => void;
   onRejectRequest: (requestId: string) => void;
@@ -20,7 +22,7 @@ interface DashboardProps {
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ 
-  user, onLogout, students, lecturers, plans, requests, onCreateRequest, onApproveRequest, onRejectRequest, onUpdatePlanDirectly, onAddUser
+  user, onLogout, students, lecturers, plans, requests, dbError, onSeedData, onCreateRequest, onApproveRequest, onRejectRequest, onUpdatePlanDirectly, onAddUser
 }) => {
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-slate-950">
@@ -76,6 +78,8 @@ const Dashboard: React.FC<DashboardProps> = ({
             lecturers={lecturers}
             plans={plans} 
             requests={requests}
+            dbError={dbError}
+            onSeedData={onSeedData}
             onApproveRequest={onApproveRequest}
             onRejectRequest={onRejectRequest}
             onUpdatePlanDirectly={onUpdatePlanDirectly}
