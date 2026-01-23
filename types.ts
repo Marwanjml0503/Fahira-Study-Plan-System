@@ -16,8 +16,9 @@ export interface User {
   id: string;
   name: string;
   role: Role;
-  programme?: string; // e.g., 'DIT', 'BIT'
-  intake?: string;    // e.g., 'May 2024'
+  password?: string;
+  programme?: string;
+  intake?: string;
 }
 
 export interface StudyPlan {

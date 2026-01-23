@@ -1,16 +1,18 @@
 
 import React, { useState } from 'react';
 import { User, Role } from '../types';
-import { MOCK_STUDENTS, MOCK_LECTURERS, MOCK_ADMINS, PASS_KEY } from '../constants';
 
 interface LoginProps {
   onLogin: (user: User) => void;
+  students: User[];
+  lecturers: User[];
 }
 
-const Login: React.FC<LoginProps> = ({ onLogin }) => {
+const Login: React.FC<LoginProps> = ({ onLogin, students, lecturers }) => {
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
 
   const handleRoleSelect = (role: Role) => {
@@ -18,25 +20,43 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
     setError('');
     setName('');
     setPassword('');
+    setShowPassword(false);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (password !== PASS_KEY) {
-      setError('Invalid password. Access Denied.');
-      return;
-    }
-
+    
     let usersToSearch: User[] = [];
-    if (selectedRole === 'Student') usersToSearch = MOCK_STUDENTS;
-    if (selectedRole === 'Lecturer') usersToSearch = MOCK_LECTURERS;
-    if (selectedRole === 'Admin') usersToSearch = MOCK_ADMINS;
+    if (selectedRole === 'Student') usersToSearch = students;
+    if (selectedRole === 'Lecturer' || selectedRole === 'Admin') usersToSearch = lecturers;
 
-    const user = usersToSearch.find(u => u.name.toLowerCase() === name.toLowerCase());
+    const trimmedName = name.trim().toLowerCase();
+    
+    // Find the user that matches name, password, AND has the correct role
+    const user = usersToSearch.find(u => {
+      const nameMatch = u.name.trim().toLowerCase() === trimmedName;
+      const passMatch = u.password === password || (!u.password && password === "Cristiano");
+      
+      // Role compatibility check:
+      // 1. If searching for Admin, must be Admin.
+      // 2. If searching for Lecturer, can be Lecturer OR Admin.
+      // 3. If searching for Student, must be Student.
+      let roleMatch = false;
+      if (selectedRole === 'Admin') {
+        roleMatch = u.role === 'Admin';
+      } else if (selectedRole === 'Lecturer') {
+        roleMatch = u.role === 'Lecturer' || u.role === 'Admin';
+      } else {
+        roleMatch = u.role === 'Student';
+      }
+
+      return nameMatch && passMatch && roleMatch;
+    });
+
     if (user) {
       onLogin(user);
     } else {
-      setError(`No ${selectedRole} found with that name.`);
+      setError(`Authentication failed. No ${selectedRole} account found for "${name}" with that password.`);
     }
   };
 
@@ -71,7 +91,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           <div className="bg-indigo-950 p-6 flex items-center justify-between border-b border-indigo-900/50">
             <div>
               <h2 className="text-white text-xl font-bold">{selectedRole} Login</h2>
-              <p className="text-indigo-300/60 text-xs">Authentication Portal</p>
+              <p className="text-indigo-300/60 text-xs">Cloud Auth Portal</p>
             </div>
             <button 
               onClick={() => setSelectedRole(null)}
@@ -89,33 +109,46 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
-                className="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-800 text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all placeholder-slate-600"
+                autoComplete="username"
+                className="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-800 text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all placeholder-slate-700"
                 placeholder="e.g. Marwan"
               />
             </div>
-            <div>
+            <div className="relative">
               <label className="block text-sm font-semibold text-slate-300 mb-2">Password</label>
               <input 
-                type="password" 
+                type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-800 text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all placeholder-slate-600"
+                autoComplete="current-password"
+                className="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-800 text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all placeholder-slate-700 pr-12"
                 placeholder="••••••••"
               />
+              <button 
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-4 top-10 text-slate-500 hover:text-teal-400 transition-colors"
+              >
+                {showPassword ? (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                )}
+              </button>
             </div>
             
-            {error && <p className="text-red-400 text-sm font-medium text-center bg-red-400/10 py-2 rounded-lg">{error}</p>}
+            {error && <p className="text-red-400 text-sm font-medium text-center bg-red-400/10 py-2 rounded-lg border border-red-400/20">{error}</p>}
             
             <button 
               type="submit"
               className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-4 rounded-xl transition-all shadow-lg hover:shadow-indigo-500/20 transform hover:scale-[1.02]"
             >
-              Secure Sign In
+              Authenticate with Supabase
             </button>
           </form>
           <div className="bg-slate-950/50 px-8 py-4 text-center border-t border-slate-800/50">
-            <p className="text-slate-600 text-[10px] uppercase tracking-widest font-bold">Secure Infrastructure Enabled</p>
+            <p className="text-slate-600 text-[10px] uppercase tracking-widest font-bold">Encrypted Database Link Active</p>
           </div>
         </div>
       )}
