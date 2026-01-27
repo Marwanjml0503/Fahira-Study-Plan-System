@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { User, Role } from '../types';
+import { PASS_KEY } from '../constants';
 
 interface LoginProps {
   onLogin: (user: User) => void;
@@ -31,12 +32,14 @@ const Login: React.FC<LoginProps> = ({ onLogin, students, lecturers, dbStatus })
     if (selectedRole === 'Student') usersToSearch = students;
     if (selectedRole === 'Lecturer' || selectedRole === 'Admin') usersToSearch = lecturers;
 
-    const trimmedName = name.trim().toLowerCase();
+    const query = name.trim().toLowerCase();
     
-    // Explicit Role Matching for same-name accounts (e.g. Marwan Lecturer vs Marwan Admin)
     const user = usersToSearch.find(u => {
-      const isNameMatch = u.name.trim().toLowerCase() === trimmedName;
-      const isPassMatch = u.password === password || (!u.password && password === "Cristiano");
+      // Case-insensitive match for name or ID
+      const isIdentifierMatch = u.name.toLowerCase() === query || u.id.toLowerCase() === query;
+      
+      // Check password - prioritizing the standard 1234 for testing as requested
+      const isPassMatch = password === PASS_KEY || u.password === password;
       
       let isRoleMatch = false;
       if (selectedRole === 'Admin') {
@@ -47,13 +50,13 @@ const Login: React.FC<LoginProps> = ({ onLogin, students, lecturers, dbStatus })
         isRoleMatch = u.role === 'Student';
       }
 
-      return isNameMatch && isPassMatch && isRoleMatch;
+      return isIdentifierMatch && isPassMatch && isRoleMatch;
     });
 
     if (user) {
       onLogin(user);
     } else {
-      setError(`Auth failed. No ${selectedRole} found with those credentials.`);
+      setError(`Auth failed. Check credentials for ${selectedRole}.`);
     }
   };
 
@@ -66,7 +69,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, students, lecturers, dbStatus })
         <span className="text-3xl font-bold">{icon}</span>
       </div>
       <h3 className="text-xl font-bold text-slate-100">{role}</h3>
-      <p className="text-slate-400 text-sm mt-2">Access your portal as {role.toLowerCase()}</p>
+      <p className="text-slate-400 text-sm mt-2">Access portal as {role.toLowerCase()}</p>
     </div>
   );
 
@@ -74,7 +77,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, students, lecturers, dbStatus })
     <div className="min-h-screen bg-[#020617] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-900/40 via-slate-950 to-slate-950 flex flex-col items-center justify-center p-6">
       <div className="text-center mb-12">
         <h1 className="text-6xl font-extrabold text-white tracking-tighter mb-2 drop-shadow-2xl">Fahira</h1>
-        <p className="text-teal-400 font-medium tracking-widest uppercase text-xs opacity-90">next gen study plan system</p>
+        <p className="text-teal-400 font-medium tracking-widest uppercase text-xs opacity-90">academic roadmap engine</p>
       </div>
 
       {!selectedRole ? (
@@ -88,7 +91,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, students, lecturers, dbStatus })
           <div className="bg-indigo-950 p-6 flex items-center justify-between border-b border-indigo-900/50">
             <div>
               <h2 className="text-white text-xl font-bold">{selectedRole} Login</h2>
-              <p className="text-indigo-300/60 text-xs">Cloud Auth Portal</p>
+              <p className="text-indigo-300/60 text-xs">Identity Verification</p>
             </div>
             <button 
               onClick={() => setSelectedRole(null)}
@@ -100,14 +103,14 @@ const Login: React.FC<LoginProps> = ({ onLogin, students, lecturers, dbStatus })
           
           <form onSubmit={handleSubmit} className="p-8 space-y-6">
             <div>
-              <label className="block text-sm font-semibold text-slate-300 mb-2">Account Name</label>
+              <label className="block text-sm font-semibold text-slate-300 mb-2">Name or ID</label>
               <input 
                 type="text" 
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
                 className="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-800 text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all placeholder-slate-700"
-                placeholder="Case insensitive"
+                placeholder="e.g. Marwan or 2024001"
               />
             </div>
             <div className="relative">
@@ -118,7 +121,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, students, lecturers, dbStatus })
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 className="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-800 text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all placeholder-slate-700 pr-12"
-                placeholder="Cristiano"
+                placeholder="1234"
               />
               <button 
                 type="button"
@@ -139,12 +142,12 @@ const Login: React.FC<LoginProps> = ({ onLogin, students, lecturers, dbStatus })
               type="submit"
               className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-4 rounded-xl transition-all shadow-lg hover:shadow-indigo-500/20 transform hover:scale-[1.02]"
             >
-              Authenticate System
+              Sign In
             </button>
           </form>
           <div className="bg-slate-950/50 px-8 py-4 text-center border-t border-slate-800/50">
             <p className="text-slate-600 text-[10px] uppercase tracking-widest font-bold">
-              Database: <span className={dbStatus === 'Online' ? 'text-teal-500' : 'text-orange-500'}>{dbStatus}</span>
+              Database Connectivity: <span className={dbStatus === 'Online' ? 'text-teal-500' : 'text-orange-500'}>{dbStatus}</span>
             </p>
           </div>
         </div>

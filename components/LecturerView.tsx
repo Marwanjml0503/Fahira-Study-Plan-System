@@ -1,204 +1,224 @@
 
 import React, { useState } from 'react';
-import { User, StudyPlan, ChangeRequest, Module } from '../types';
-import { STATUS_COLORS, PROGRAMME_SEMESTERS } from '../constants';
+import { User, StudyPlan, ChangeRequest, Module, IntakePlan } from '../types';
+import { PROGRAMME_SEMESTERS } from '../constants';
 
 interface LecturerViewProps {
   lecturer: User;
   students: User[];
   plans: Record<string, StudyPlan>;
+  intakePlans: Record<string, IntakePlan>;
   requests: ChangeRequest[];
   onCreateRequest: (request: Omit<ChangeRequest, 'id' | 'createdAt' | 'status'>) => void;
+  onUpdateIntakePlan: (intakeId: string, modules: Module[]) => void;
 }
 
-const LecturerView: React.FC<LecturerViewProps> = ({ lecturer, students, plans, requests, onCreateRequest }) => {
+const LecturerView: React.FC<LecturerViewProps> = ({ 
+  lecturer, students, plans, intakePlans, requests, onCreateRequest, onUpdateIntakePlan 
+}) => {
+  const [selectedIntakeId, setSelectedIntakeId] = useState<string | null>(null);
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
-  const [editingPlan, setEditingPlan] = useState<Module[] | null>(null);
-  const [remarks, setRemarks] = useState('');
-  const [search, setSearch] = useState('');
+  const [showCurriculumUpload, setShowCurriculumUpload] = useState(false);
+  const [curriculumData, setCurriculumData] = useState('');
 
-  const filteredStudents = students.filter(s => s.name.toLowerCase().includes(search.toLowerCase()) || s.id.toLowerCase().includes(search.toLowerCase()));
+  const intakes = Array.from(new Set(students.map(s => `${s.programme}-${s.intake}`))).sort();
+  const filteredStudents = students.filter(s => `${s.programme}-${s.intake}` === selectedIntakeId);
 
-  const handleSelectStudent = (id: string) => {
-    setSelectedStudentId(id);
-    setEditingPlan([...plans[id].modules]);
-    setRemarks('');
-  };
-
-  const handleMoveModule = (moduleId: string, direction: 'up' | 'down') => {
-    if (!editingPlan) return;
-    const student = students.find(s => s.id === selectedStudentId);
-    const maxSem = PROGRAMME_SEMESTERS[student?.programme || 'DIT'];
+  const handleImportCurriculum = () => {
+    if (!selectedIntakeId || !curriculumData.trim()) return;
     
-    setEditingPlan(prev => prev?.map(m => {
-      if (m.id === moduleId) {
-        const nextSem = direction === 'up' ? m.semester - 1 : m.semester + 1;
-        if (nextSem >= 1 && nextSem <= maxSem) return { ...m, semester: nextSem };
-      }
-      return m;
-    }) || null);
-  };
-
-  const handleChangeStatus = (moduleId: string, status: any) => {
-    setEditingPlan(prev => prev?.map(m => m.id === moduleId ? { ...m, status } : m) || null);
-  };
-
-  const handleSubmitProposal = () => {
-    if (!selectedStudentId || !editingPlan) return;
-    onCreateRequest({
-      studentId: selectedStudentId,
-      lecturerId: lecturer.id,
-      reason: remarks,
-      proposedModules: editingPlan
+    // Format: Module code, module name, credit hours, lecturer, [optional semester]
+    const lines = curriculumData.split('\n');
+    const newModules: Module[] = lines.filter(l => l.trim()).map((line, i) => {
+      const parts = line.includes('\t') ? line.split('\t') : line.split(',');
+      const [code, name, credits, lec, sem] = parts.map(s => s.trim());
+      return {
+        id: `ip-${selectedIntakeId}-${Date.now()}-${i}`,
+        code: code || 'TBA',
+        name: name || 'Untitled Module',
+        credits: parseInt(credits) || 3,
+        semester: parseInt(sem) || (i < 5 ? 1 : i < 10 ? 2 : 3), // Smart semester guess if not provided
+        status: 'Planned',
+        lecturer: lec || lecturer.name
+      };
     });
-    alert("Proposal submitted to admin for approval.");
-    setSelectedStudentId(null);
-    setEditingPlan(null);
+
+    onUpdateIntakePlan(selectedIntakeId, newModules);
+    setCurriculumData('');
+    setShowCurriculumUpload(false);
+    alert(`Master Curriculum for ${selectedIntakeId} updated successfully.`);
   };
 
   return (
-    <div className="max-w-7xl mx-auto h-full flex gap-8">
-      {/* Sidebar: Student List */}
-      <div className="w-80 flex flex-col gap-4">
-        <div className="bg-slate-900 p-6 rounded-2xl border border-slate-800 shadow-xl">
-          <h3 className="font-bold text-slate-100 mb-4">Find Student</h3>
-          <div className="relative">
-            <input 
-              type="text" 
-              placeholder="Search by name..." 
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none text-sm text-white transition-all"
-            />
-            <span className="absolute left-3 top-3 text-slate-600">🔍</span>
-          </div>
+    <div className="max-w-7xl mx-auto h-full flex flex-col gap-8 animate-fadeIn">
+      <div className="bg-slate-900 p-8 rounded-3xl border border-slate-800 shadow-2xl flex flex-wrap items-center justify-between gap-6">
+        <div>
+          <h2 className="text-2xl font-black text-white italic tracking-tighter leading-none">Academic Hub</h2>
+          <p className="text-[10px] text-teal-500 uppercase font-black tracking-widest mt-2">Intake Oversight</p>
         </div>
-
-        <div className="bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden flex-1 shadow-xl">
-          <div className="bg-slate-950 px-6 py-4 border-b border-slate-800">
-            <h3 className="font-bold text-slate-500 text-[10px] uppercase tracking-widest">Active Enrollments</h3>
-          </div>
-          <div className="overflow-auto max-h-[calc(100vh-320px)]">
-            {filteredStudents.map(s => (
-              <button
-                key={s.id}
-                onClick={() => handleSelectStudent(s.id)}
-                className={`w-full text-left px-6 py-5 border-b border-slate-800 last:border-0 hover:bg-slate-800 transition-all ${selectedStudentId === s.id ? 'bg-teal-500/10 border-l-4 border-l-teal-500' : ''}`}
-              >
-                <div className="font-bold text-slate-100">{s.name}</div>
-                <div className="text-[10px] text-slate-500 font-black uppercase mt-1 tracking-tighter">{s.programme} • {s.intake}</div>
-              </button>
-            ))}
-          </div>
+        <div className="flex flex-wrap gap-2">
+          {intakes.map(id => (
+            <button 
+              key={id}
+              onClick={() => {
+                setSelectedIntakeId(id);
+                setSelectedStudentId(null);
+                setShowCurriculumUpload(false);
+              }}
+              className={`px-5 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest border transition-all ${selectedIntakeId === id ? 'bg-teal-600 border-teal-500 text-white shadow-lg' : 'bg-slate-950 border-slate-800 text-slate-500 hover:text-slate-300'}`}
+            >
+              {id}
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* Main Panel: Editor */}
-      <div className="flex-1 bg-slate-900 rounded-3xl border border-slate-800 overflow-hidden flex flex-col shadow-2xl">
-        {!selectedStudentId ? (
-          <div className="flex-1 flex flex-col items-center justify-center text-slate-600 p-12 text-center">
-            <div className="w-24 h-24 bg-slate-950 border border-slate-800 rounded-full flex items-center justify-center mb-6 text-4xl shadow-inner italic font-black">F</div>
-            <h3 className="text-xl font-bold text-slate-300">Ready to Propose</h3>
-            <p className="max-w-xs mt-3 text-sm font-medium">Select a student to begin crafting their academic trajectory.</p>
-          </div>
-        ) : (
-          <>
-            <div className="p-8 border-b border-slate-800 flex justify-between items-center bg-slate-900/80 backdrop-blur sticky top-0 z-10">
-              <div>
-                <h2 className="text-2xl font-black text-white tracking-tight italic">Editing Proposal: <span className="text-teal-400 not-italic">{students.find(s => s.id === selectedStudentId)?.name}</span></h2>
-                <div className="flex items-center gap-2 mt-2">
-                  <span className="w-2 h-2 rounded-full bg-teal-500 animate-pulse"></span>
-                  <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Controlled Edit Mode</p>
-                </div>
-              </div>
-              <div className="flex gap-4">
-                <button 
-                  onClick={() => setSelectedStudentId(null)}
-                  className="px-6 py-2.5 rounded-xl text-slate-500 font-bold hover:text-white transition-all"
-                >
-                  Cancel
-                </button>
-                <button 
-                  onClick={handleSubmitProposal}
-                  className="px-6 py-2.5 bg-teal-600 text-white rounded-xl font-bold hover:bg-teal-500 shadow-lg shadow-teal-500/20 transition-all transform active:scale-95"
-                >
-                  Send to Admin
-                </button>
-              </div>
+      {!selectedIntakeId ? (
+        <div className="flex-1 flex flex-col items-center justify-center bg-slate-900/50 rounded-3xl border-2 border-dashed border-slate-800 p-20 opacity-50">
+          <p className="text-4xl italic font-black text-slate-700">SELECT ACADEMIC BATCH</p>
+          <p className="text-[10px] uppercase font-bold tracking-[0.3em] mt-4">Review Enrollment & Standards</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 flex-1 overflow-hidden">
+          <div className="lg:col-span-1 bg-slate-900 rounded-3xl border border-slate-800 overflow-hidden flex flex-col shadow-2xl">
+            <div className="p-6 border-b border-slate-800 bg-slate-950 flex justify-between items-center">
+              <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Enrollment: {selectedIntakeId}</h3>
+              <button 
+                onClick={() => setShowCurriculumUpload(true)}
+                className="text-[9px] font-black text-indigo-400 uppercase tracking-widest hover:text-white transition-colors"
+              >
+                Config Master
+              </button>
             </div>
-
-            <div className="flex-1 overflow-auto p-8 space-y-12 bg-[#0a101f]">
-              <div className="bg-indigo-950/30 p-6 rounded-2xl border border-indigo-500/20">
-                <label className="block text-xs font-black text-indigo-400 uppercase tracking-widest mb-3">Rationale for Changes</label>
-                <textarea 
-                  value={remarks}
-                  onChange={(e) => setRemarks(e.target.value)}
-                  placeholder="Explain your reasoning for the admin..."
-                  className="w-full h-24 p-4 rounded-xl bg-slate-950 border border-slate-800 text-white focus:ring-2 focus:ring-teal-500 outline-none text-sm transition-all"
-                />
-              </div>
-
-              {Array.from({ length: PROGRAMME_SEMESTERS[students.find(s => s.id === selectedStudentId)?.programme || 'DIT'] }, (_, i) => i + 1).map(sem => (
-                <div key={sem} className="relative">
-                  <div className="flex items-center gap-4 mb-6">
-                    <h3 className="text-lg font-black text-slate-400 tracking-tighter uppercase">Semester {sem}</h3>
-                    <div className="h-[1px] bg-slate-800 w-full opacity-50"></div>
+            <div className="flex-1 overflow-auto bg-[#0a101f]">
+              {filteredStudents.map(s => (
+                <button
+                  key={s.id}
+                  onClick={() => { setSelectedStudentId(s.id); setShowCurriculumUpload(false); }}
+                  className={`w-full text-left p-6 border-b border-slate-800/50 hover:bg-slate-800/30 transition-all flex items-center justify-between ${selectedStudentId === s.id ? 'bg-teal-500/10 border-l-4 border-teal-500' : ''}`}
+                >
+                  <div>
+                    <div className="font-bold text-slate-100 flex items-center gap-2 text-sm">
+                      {s.name}
+                      {s.isSpecialCase && <span className="text-yellow-400 text-lg drop-shadow-sm">★</span>}
+                    </div>
+                    <div className="text-[10px] text-slate-600 uppercase font-black mt-1 tracking-tighter">ID: {s.id}</div>
                   </div>
-                  <div className="space-y-3">
-                    {editingPlan?.filter(m => m.semester === sem).map(m => (
-                      <div key={m.id} className="flex items-center gap-6 p-5 bg-slate-900/50 border border-slate-800 rounded-2xl hover:border-teal-500/30 transition-all group">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="text-[10px] font-black text-teal-500 uppercase tracking-tighter">{m.code}</span>
-                            <span className="text-[9px] text-slate-600 font-bold uppercase tracking-widest">• {m.credits} Credits</span>
-                          </div>
-                          <p className="font-bold text-slate-200">{m.name}</p>
-                        </div>
-                        
-                        <div className="flex items-center gap-6">
-                          <select 
-                            value={m.status}
-                            onChange={(e) => handleChangeStatus(m.id, e.target.value)}
-                            className="text-[10px] font-black uppercase rounded-lg bg-slate-950 border border-slate-800 py-1.5 px-3 text-slate-300 focus:ring-2 focus:ring-teal-500 outline-none transition-all"
-                          >
-                            <option value="Planned">Planned</option>
-                            <option value="In Progress">In Progress</option>
-                            <option value="Passed">Passed</option>
-                            <option value="Failed">Failed</option>
-                            <option value="Retake">Retake</option>
-                          </select>
-
-                          <div className="flex flex-col gap-1.5">
-                            <button 
-                              onClick={() => handleMoveModule(m.id, 'up')}
-                              className="p-1 hover:bg-teal-500/10 rounded text-slate-600 hover:text-teal-400 transition-all"
-                              title="Previous Semester"
-                            >
-                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M7.247 4.86l-4.796 5.481c-.566.647-.106 1.659.753 1.659h9.592a1 1 0 0 0 .753-1.659l-4.796-5.48a1 1 0 0 0-1.506 0z"/></svg>
-                            </button>
-                            <button 
-                              onClick={() => handleMoveModule(m.id, 'down')}
-                              className="p-1 hover:bg-teal-500/10 rounded text-slate-600 hover:text-teal-400 transition-all"
-                              title="Next Semester"
-                            >
-                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z"/></svg>
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                    {editingPlan?.filter(m => m.semester === sem).length === 0 && (
-                      <div className="py-6 border-2 border-dashed border-slate-800/50 rounded-2xl text-center text-slate-700 text-[10px] font-black uppercase tracking-widest">
-                        Available Semester Slot
-                      </div>
-                    )}
-                  </div>
-                </div>
+                </button>
               ))}
             </div>
-          </>
-        )}
-      </div>
+          </div>
+
+          <div className="lg:col-span-3 bg-slate-900 rounded-3xl border border-slate-800 overflow-hidden flex flex-col shadow-2xl">
+            {showCurriculumUpload ? (
+              <div className="p-8 animate-fadeIn h-full flex flex-col">
+                <div className="mb-6">
+                  <h3 className="text-white font-black italic text-xl">Intake Master Curriculum Import</h3>
+                  <p className="text-slate-500 text-xs mt-1">Define the baseline modules for {selectedIntakeId}.</p>
+                </div>
+                <div className="bg-slate-950/50 p-6 rounded-2xl border border-slate-800 mb-6">
+                   <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Expected Column Order</p>
+                   <p className="text-xs font-mono text-indigo-400 leading-relaxed">
+                      Module Code, Module Name, Credit Hours, Lecturer, Semester (optional)
+                   </p>
+                </div>
+                <textarea 
+                  className="flex-1 bg-slate-950 border border-slate-800 rounded-2xl p-6 text-teal-400 font-mono text-xs focus:ring-2 focus:ring-teal-500 outline-none shadow-inner resize-none transition-all"
+                  placeholder="CSC1101, Programming Basics, 3, Mr. Marwan, 1&#10;MPU210, Entrepreneurship, 3, Mr. Sanjay, 6"
+                  value={curriculumData}
+                  onChange={(e) => setCurriculumData(e.target.value)}
+                />
+                <div className="flex justify-end gap-4 mt-8">
+                  <button onClick={() => setShowCurriculumUpload(false)} className="text-slate-500 font-black uppercase text-[10px]">Cancel</button>
+                  <button onClick={handleImportCurriculum} className="bg-indigo-600 hover:bg-indigo-500 text-white px-10 py-4 rounded-xl font-black uppercase text-[10px] tracking-widest shadow-xl transition-all">Publish Master Plan</button>
+                </div>
+              </div>
+            ) : selectedStudentId ? (
+              <div className="flex flex-col h-full overflow-hidden">
+                <div className="p-8 bg-slate-950 border-b border-slate-800 flex justify-between items-center">
+                  <div>
+                    <div className="flex items-center gap-3">
+                      <h3 className="text-2xl font-black text-white italic tracking-tighter">{students.find(s => s.id === selectedStudentId)?.name}</h3>
+                      {students.find(s => s.id === selectedStudentId)?.isSpecialCase && <span className="text-yellow-400 font-bold text-[9px] uppercase tracking-widest bg-yellow-400/10 px-2 py-1 rounded border border-yellow-400/20 flex items-center gap-1">★ Special Case</span>}
+                    </div>
+                    <p className="text-[10px] text-teal-500 font-bold uppercase tracking-widest mt-1">Individual Progress Mapping</p>
+                  </div>
+                  <button onClick={() => setSelectedStudentId(null)} className="text-slate-500 font-black uppercase text-[10px]">Close View</button>
+                </div>
+                
+                <div className="flex-1 overflow-auto p-8 bg-[#0a101f] space-y-12">
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10 border-b border-slate-800 pb-10">
+                      <div className="bg-slate-900/50 p-6 rounded-3xl border border-slate-800">
+                         <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4">Intake Standards</h4>
+                         <div className="space-y-2 max-h-40 overflow-auto pr-4">
+                            {intakePlans[selectedIntakeId]?.modules.slice(0, 10).map(m => (
+                               <div key={m.id} className="text-[10px] text-slate-400 flex justify-between border-b border-slate-800/50 pb-2">
+                                  <span>{m.code} {m.name}</span>
+                                  <span className="font-bold">Sem {m.semester}</span>
+                               </div>
+                            ))}
+                            {(!intakePlans[selectedIntakeId] || intakePlans[selectedIntakeId]?.modules.length === 0) && (
+                               <p className="text-xs text-slate-600 italic">No master standards defined for this intake.</p>
+                            )}
+                         </div>
+                      </div>
+                      <div className="bg-slate-900/50 p-6 rounded-3xl border border-slate-800">
+                         <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4">Live Module Status</h4>
+                         <div className="space-y-3">
+                            {plans[selectedStudentId]?.modules.filter(m => m.status === 'Active' || m.status === 'In Progress').map(m => (
+                               <div key={m.id} className="p-3 bg-teal-500/10 border border-teal-500/20 rounded-xl flex justify-between items-center">
+                                  <div>
+                                     <p className="text-[10px] font-black text-teal-400">{m.code}</p>
+                                     <p className="text-xs font-bold text-white">{m.name}</p>
+                                  </div>
+                                  <span className="text-[9px] font-black text-teal-400 uppercase tracking-tighter">In Training</span>
+                               </div>
+                            ))}
+                            {plans[selectedStudentId]?.modules.filter(m => m.status === 'Active' || m.status === 'In Progress').length === 0 && (
+                               <p className="text-xs text-slate-600 italic text-center py-4">Student has no modules marked as active.</p>
+                            )}
+                         </div>
+                      </div>
+                   </div>
+
+                  {Array.from({ length: PROGRAMME_SEMESTERS[selectedIntakeId.split('-')[0]] }, (_, i) => i + 1).map(sem => (
+                    <div key={sem}>
+                      <h4 className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-4 border-l-2 border-indigo-500 pl-3">Semester {sem}</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {plans[selectedStudentId]?.modules.filter(m => m.semester === sem).map(m => (
+                          <div key={m.id} className="p-5 bg-slate-900 border border-slate-800 rounded-2xl flex justify-between items-center transition-all hover:border-slate-600">
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-[10px] font-black text-teal-400 uppercase">{m.code}</span>
+                                <span className="text-[8px] text-slate-600 font-bold uppercase">• {m.credits} Credits</span>
+                              </div>
+                              <p className="text-sm font-bold text-white mt-1 leading-snug">{m.name}</p>
+                            </div>
+                            <span className={`text-[9px] px-2.5 py-1 rounded-full font-black uppercase border ${
+                              m.status === 'Passed' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                              m.status === 'Active' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
+                              m.status === 'Failed' || m.status === 'Retake' ? 'bg-red-500/10 text-red-400 border-red-500/20' :
+                              'bg-slate-500/10 text-slate-500 border-slate-800'
+                            }`}>
+                              {m.status}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="flex-1 flex flex-col items-center justify-center text-slate-700 bg-[#0a101f]">
+                 <div className="text-6xl mb-6 grayscale opacity-10">🔍</div>
+                 <p className="text-xl italic font-black text-slate-500 uppercase tracking-tighter">Academic Inspection</p>
+                 <p className="text-[10px] uppercase font-bold tracking-[0.2em] mt-2 opacity-50">Select student from {selectedIntakeId} to view history</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
