@@ -29,8 +29,8 @@ const Dashboard: React.FC<DashboardProps> = (props) => {
   const { user, onLogout } = props;
   
   return (
-    <div className="flex flex-col h-screen overflow-hidden bg-slate-950">
-      <header className="bg-slate-900 border-b border-slate-800 px-8 py-4 flex items-center justify-between shadow-2xl z-10">
+    <div className="flex flex-col min-h-screen bg-slate-950">
+      <header className="bg-slate-900 border-b border-slate-800 px-8 py-4 flex items-center justify-between shadow-2xl sticky top-0 z-50">
         <div className="flex items-center space-x-3">
           <div className="bg-teal-600 w-10 h-10 rounded-lg flex items-center justify-center text-white font-black text-xl">F</div>
           <div>
@@ -56,7 +56,7 @@ const Dashboard: React.FC<DashboardProps> = (props) => {
         </div>
       </header>
 
-      <main className="flex-1 overflow-auto bg-slate-950 p-8">
+      <main className="flex-1 bg-slate-950 p-4 md:p-8">
         {user.role === 'Student' && (
           <StudentView 
             student={user} 

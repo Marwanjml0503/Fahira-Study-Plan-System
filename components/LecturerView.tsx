@@ -50,8 +50,8 @@ const LecturerView: React.FC<LecturerViewProps> = ({
   };
 
   return (
-    <div className="max-w-7xl mx-auto h-full flex flex-col gap-8 animate-fadeIn">
-      <div className="bg-slate-900 p-8 rounded-3xl border border-slate-800 shadow-2xl flex flex-wrap items-center justify-between gap-6">
+    <div className="max-w-7xl mx-auto flex flex-col gap-8 animate-fadeIn pb-12">
+      <div className="bg-slate-900 p-6 md:p-8 rounded-3xl border border-slate-800 shadow-2xl flex flex-wrap items-center justify-between gap-6">
         <div>
           <h2 className="text-2xl font-black text-white italic tracking-tighter leading-none">Academic Hub</h2>
           <p className="text-[10px] text-teal-500 uppercase font-black tracking-widest mt-2">Intake Oversight</p>
@@ -79,9 +79,9 @@ const LecturerView: React.FC<LecturerViewProps> = ({
           <p className="text-[10px] uppercase font-bold tracking-[0.3em] mt-4">Review Enrollment & Standards</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 flex-1 overflow-hidden">
-          <div className="lg:col-span-1 bg-slate-900 rounded-3xl border border-slate-800 overflow-hidden flex flex-col shadow-2xl">
-            <div className="p-6 border-b border-slate-800 bg-slate-950 flex justify-between items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          <div className="lg:col-span-1 bg-slate-900 rounded-3xl border border-slate-800 flex flex-col shadow-2xl h-fit lg:max-h-[80vh]">
+            <div className="p-6 border-b border-slate-800 bg-slate-950 flex justify-between items-center sticky top-0 z-10 rounded-t-3xl">
               <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Enrollment: {selectedIntakeId}</h3>
               <button 
                 onClick={() => setShowCurriculumUpload(true)}
@@ -90,7 +90,7 @@ const LecturerView: React.FC<LecturerViewProps> = ({
                 Config Master
               </button>
             </div>
-            <div className="flex-1 overflow-auto bg-[#0a101f]">
+            <div className="overflow-y-auto bg-[#0a101f] max-h-[50vh] lg:max-h-full">
               {filteredStudents.map(s => (
                 <button
                   key={s.id}
@@ -109,9 +109,9 @@ const LecturerView: React.FC<LecturerViewProps> = ({
             </div>
           </div>
 
-          <div className="lg:col-span-3 bg-slate-900 rounded-3xl border border-slate-800 overflow-hidden flex flex-col shadow-2xl">
+          <div className="lg:col-span-3 bg-slate-900 rounded-3xl border border-slate-800 shadow-2xl min-h-[600px] flex flex-col">
             {showCurriculumUpload ? (
-              <div className="p-8 animate-fadeIn h-full flex flex-col">
+              <div className="p-6 md:p-8 animate-fadeIn flex flex-col h-full">
                 <div className="mb-6">
                   <h3 className="text-white font-black italic text-xl">Intake Master Curriculum Import</h3>
                   <p className="text-slate-500 text-xs mt-1">Define the baseline modules for {selectedIntakeId}.</p>
@@ -122,20 +122,22 @@ const LecturerView: React.FC<LecturerViewProps> = ({
                       Module Code, Module Name, Credit Hours, Lecturer, Semester (optional)
                    </p>
                 </div>
-                <textarea 
-                  className="flex-1 bg-slate-950 border border-slate-800 rounded-2xl p-6 text-teal-400 font-mono text-xs focus:ring-2 focus:ring-teal-500 outline-none shadow-inner resize-none transition-all"
-                  placeholder="CSC1101, Programming Basics, 3, Mr. Marwan, 1&#10;MPU210, Entrepreneurship, 3, Mr. Sanjay, 6"
-                  value={curriculumData}
-                  onChange={(e) => setCurriculumData(e.target.value)}
-                />
+                <div className="flex-1 flex flex-col min-h-[300px]">
+                  <textarea 
+                    className="flex-1 bg-slate-950 border border-slate-800 rounded-2xl p-6 text-teal-400 font-mono text-xs focus:ring-2 focus:ring-teal-500 outline-none shadow-inner resize-none transition-all"
+                    placeholder="CSC1101, Programming Basics, 3, Mr. Marwan, 1&#10;MPU210, Entrepreneurship, 3, Mr. Sanjay, 6"
+                    value={curriculumData}
+                    onChange={(e) => setCurriculumData(e.target.value)}
+                  />
+                </div>
                 <div className="flex justify-end gap-4 mt-8">
                   <button onClick={() => setShowCurriculumUpload(false)} className="text-slate-500 font-black uppercase text-[10px]">Cancel</button>
                   <button onClick={handleImportCurriculum} className="bg-indigo-600 hover:bg-indigo-500 text-white px-10 py-4 rounded-xl font-black uppercase text-[10px] tracking-widest shadow-xl transition-all">Publish Master Plan</button>
                 </div>
               </div>
             ) : selectedStudentId ? (
-              <div className="flex flex-col h-full overflow-hidden">
-                <div className="p-8 bg-slate-950 border-b border-slate-800 flex justify-between items-center">
+              <div className="flex flex-col">
+                <div className="p-8 bg-slate-950 border-b border-slate-800 flex justify-between items-center rounded-t-3xl">
                   <div>
                     <div className="flex items-center gap-3">
                       <h3 className="text-2xl font-black text-white italic tracking-tighter">{students.find(s => s.id === selectedStudentId)?.name}</h3>
@@ -146,12 +148,12 @@ const LecturerView: React.FC<LecturerViewProps> = ({
                   <button onClick={() => setSelectedStudentId(null)} className="text-slate-500 font-black uppercase text-[10px]">Close View</button>
                 </div>
                 
-                <div className="flex-1 overflow-auto p-8 bg-[#0a101f] space-y-12">
+                <div className="p-8 bg-[#0a101f] space-y-12 rounded-b-3xl">
                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10 border-b border-slate-800 pb-10">
                       <div className="bg-slate-900/50 p-6 rounded-3xl border border-slate-800">
                          <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4">Intake Standards</h4>
-                         <div className="space-y-2 max-h-40 overflow-auto pr-4">
-                            {intakePlans[selectedIntakeId]?.modules.slice(0, 10).map(m => (
+                         <div className="space-y-2 max-h-60 overflow-y-auto pr-4">
+                            {intakePlans[selectedIntakeId]?.modules.slice(0, 20).map(m => (
                                <div key={m.id} className="text-[10px] text-slate-400 flex justify-between border-b border-slate-800/50 pb-2">
                                   <span>{m.code} {m.name}</span>
                                   <span className="font-bold">Sem {m.semester}</span>
@@ -181,7 +183,7 @@ const LecturerView: React.FC<LecturerViewProps> = ({
                       </div>
                    </div>
 
-                  {Array.from({ length: PROGRAMME_SEMESTERS[selectedIntakeId.split('-')[0]] }, (_, i) => i + 1).map(sem => (
+                  {Array.from({ length: PROGRAMME_SEMESTERS[selectedIntakeId.split('-')[0]] || 6 }, (_, i) => i + 1).map(sem => (
                     <div key={sem}>
                       <h4 className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-4 border-l-2 border-indigo-500 pl-3">Semester {sem}</h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -210,7 +212,7 @@ const LecturerView: React.FC<LecturerViewProps> = ({
                 </div>
               </div>
             ) : (
-              <div className="flex-1 flex flex-col items-center justify-center text-slate-700 bg-[#0a101f]">
+              <div className="flex-1 flex flex-col items-center justify-center text-slate-700 bg-[#0a101f] rounded-3xl">
                  <div className="text-6xl mb-6 grayscale opacity-10">🔍</div>
                  <p className="text-xl italic font-black text-slate-500 uppercase tracking-tighter">Academic Inspection</p>
                  <p className="text-[10px] uppercase font-bold tracking-[0.2em] mt-2 opacity-50">Select student from {selectedIntakeId} to view history</p>

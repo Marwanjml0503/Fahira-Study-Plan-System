@@ -29,7 +29,6 @@ const App: React.FC = () => {
       
       if (pError || !profiles || profiles.length === 0) {
         if (pError) setDbError(pError.message);
-        // Fallback to mocks if DB fails or is empty
         setStudents(MOCK_STUDENTS);
         setLecturers([...MOCK_LECTURERS, ...MOCK_ADMINS]);
       } else {
@@ -89,17 +88,23 @@ const App: React.FC = () => {
       modules: modules,
       last_updated: new Date().toISOString()
     });
-    fetchData();
+    await fetchData();
   };
 
   const handleUpdatePersonalPlan = async (studentId: string, modules: Module[]) => {
-    await supabase.from('study_plans').upsert({
-      student_id: studentId,
-      modules: modules,
-      last_updated: new Date().toISOString(),
-      updated_by: currentUser?.name || 'Self'
-    }, { onConflict: 'student_id' });
-    fetchData();
+    try {
+      const { error } = await supabase.from('study_plans').upsert({
+        student_id: studentId,
+        modules: modules,
+        last_updated: new Date().toISOString(),
+        updated_by: currentUser?.name || 'Self'
+      }, { onConflict: 'student_id' });
+      
+      if (error) throw error;
+      await fetchData();
+    } catch (err: any) {
+      alert(`Sync Failed: ${err.message}`);
+    }
   };
 
   const handleAddUser = async (user: User) => {
@@ -169,7 +174,7 @@ const App: React.FC = () => {
   );
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
+    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans">
       {!currentUser ? (
         <Login onLogin={setCurrentUser} students={students} lecturers={lecturers} dbStatus={dbError ? 'Offline' : 'Online'} />
       ) : (
@@ -190,7 +195,7 @@ const App: React.FC = () => {
           onAddUser={handleAddUser}
           onBulkAddUsers={handleBulkAddUsers}
           onDeleteUser={handleDeleteUser}
-          onSeedData={async () => {}} // Redundant
+          onSeedData={async () => {}} 
         />
       )}
     </div>
