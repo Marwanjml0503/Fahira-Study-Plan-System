@@ -1,0 +1,84 @@
+{
+    "name": "Diploma in Information Technology - Plan A",
+    "duration": "2 Years (6 Semesters)",
+    "totalCredits": 90,
+    "creditRequirements": {
+        "core": 39,
+        "disciplineCore": 26,
+        "compulsory": 6,
+        "industrial": 6,
+        "elective": 8,
+        "project": 5
+    },
+    "classifications": {
+        "core": "Core Subjects",
+        "disciplineCore": "Discipline Core",
+        "compulsory": "Compulsory University Subjects",
+        "industrial": "Industrial Training",
+        "elective": "Elective Subjects",
+        "project": "Final Project"
+    },
+    "semesters": [
+        {
+            "semester": "Year 1 Semester 1",
+            "duration": "Months 1-3",
+            "modules": [
+                { "code": "DIT11113", "name": "Principles of Computer Programming", "credits": 3, "classification": "core", "type": "theory" },
+                { "code": "DBS12044", "name": "Statistics", "credits": 4, "classification": "core", "type": "theory" },
+                { "code": "DIT11124", "name": "Computer Organisation and Architecture", "credits": 4, "classification": "core", "type": "theory" },
+                { "code": "DBS13044", "name": "Information Technology Essentials", "credits": 4, "classification": "core", "type": "theory" }
+            ]
+        },
+        {
+            "semester": "Year 1 Semester 2",
+            "duration": "Months 4-6",
+            "modules": [
+                { "code": "DIT12113", "name": "Discrete Mathematics", "credits": 3, "classification": "core", "type": "theory" },
+                { "code": "DIT12124", "name": "Operating Systems", "credits": 4, "classification": "disciplineCore", "type": "theory" },
+                { "code": "DIT12134", "name": "Databases", "credits": 4, "classification": "disciplineCore", "type": "theory" },
+                { "code": "DIT12143", "name": "Calculus and Algebra", "credits": 3, "classification": "core", "type": "theory" }
+            ]
+        },
+        {
+            "semester": "Year 1 Semester 3",
+            "duration": "Months 7-9",
+            "modules": [
+                { "code": "DIT13113", "name": "Data Communications", "credits": 3, "classification": "disciplineCore", "type": "theory" },
+                { "code": "MPU2422", "name": "Kursus Integriti dan Anti-Rasuah", "credits": 2, "classification": "compulsory", "type": "university" },
+                { "code": "DIT11134", "name": "System Analysis and Design", "credits": 4, "classification": "disciplineCore", "type": "theory" },
+                { "code": "DIT13134", "name": "Object Oriented Programming", "credits": 4, "classification": "disciplineCore", "type": "practical" }
+            ]
+        },
+        {
+            "semester": "Year 2 Semester 1",
+            "duration": "Months 10-12",
+            "modules": [
+                { "code": "DIT21114", "name": "Computer Networks", "credits": 4, "classification": "disciplineCore", "type": "theory" },
+                { "code": "DIT21124", "name": "Web Programming", "credits": 4, "classification": "disciplineCore", "type": "practical" },
+                { "code": "DIT21133", "name": "Cloud Computing", "credits": 3, "classification": "disciplineCore", "type": "theory" },
+                { "code": "ELECTIVE1", "name": "Elective 1", "credits": 4, "classification": "elective", "type": "elective" }
+            ]
+        },
+        {
+            "semester": "Year 2 Semester 2",
+            "duration": "Months 13-15",
+            "modules": [
+                { "code": "DIT22114", "name": "Mobile Applications Development", "credits": 4, "classification": "disciplineCore", "type": "practical" },
+                { "code": "DIT22123", "name": "Ethics and Professional Practice in Computing", "credits": 3, "classification": "compulsory", "type": "theory" },
+                { "code": "DIT22134", "name": "Internet of Things", "credits": 4, "classification": "disciplineCore", "type": "practical" },
+                { "code": "DIT22143", "name": "Computer Security", "credits": 3, "classification": "disciplineCore", "type": "theory" }
+            ]
+        },
+        {
+            "semester": "Year 2 Semester 3",
+            "duration": "Months 16-18",
+            "modules": [
+                { "code": "DIT23115", "name": "Project", "credits": 5, "classification": "project", "type": "project" },
+                { "code": "DIT23144", "name": "UI/UX Design", "credits": 4, "classification": "disciplineCore", "type": "practical" },
+                { "code": "MPU2132", "name": "Bahasa Komunikasi 1", "credits": 2, "classification": "compulsory", "type": "university" },
+                { "code": "MPU2212", "name": "Bahasa Kebangsaan A", "credits": 2, "classification": "compulsory", "type": "university" },
+                { "code": "INDUSTRIAL", "name": "Industrial Training", "credits": 6, "classification": "industrial", "type": "training" }
+            ]
+        }
+    ]
+}

@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Study Plan - StudyPlan Portal</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-core.js"></script>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+            overflow-x: hidden;
+        }
+
+        :root {
+            --bg-primary: #0a0c15;
+            --bg-secondary: #05070f;
+            --bg-card: rgba(18, 22, 35, 0.85);
+            --bg-card-solid: #121623;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a8c0;
+            --accent-primary: #ff6b35;
+            --accent-secondary: #ff8c42;
+            --accent-tertiary: #ffb347;
+            --accent-glow: rgba(255, 107, 53, 0.25);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --gradient-start: #0f1222;
+            --gradient-end: #080b14;
+            --shadow-sm: 0 2px 8px rgba(0,0,0,0.4);
+            --shadow-md: 0 8px 20px rgba(0,0,0,0.5);
+            --shadow-lg: 0 15px 35px rgba(0,0,0,0.6);
+            --shadow-xl: 0 25px 45px rgba(0,0,0,0.7);
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #fef9f0;
+            --bg-secondary: #fff5e8;
+            --bg-card: rgba(255, 255, 255, 0.95);
+            --bg-card-solid: #ffffff;
+            --text-primary: #2d2418;
+            --text-secondary: #6b5a4a;
+            --accent-primary: #e85d04;
+            --accent-secondary: #f48c06;
+            --accent-tertiary: #faa307;
+            --accent-glow: rgba(232, 93, 4, 0.15);
+            --border-color: rgba(0, 0, 0, 0.08);
+            --gradient-start: #fff8f0;
+            --gradient-end: #fff2e6;
+            --shadow-sm: 0 2px 8px rgba(0,0,0,0.05);
+            --shadow-md: 0 8px 20px rgba(0,0,0,0.08);
+            --shadow-lg: 0 15px 35px rgba(0,0,0,0.1);
+            --shadow-xl: 0 25px 45px rgba(0,0,0,0.12);
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 32px;
+            background: var(--bg-card);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo i {
+            font-size: 2rem;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+
+        .logo h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .logo span {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+
+        nav ul {
+            display: flex;
+            list-style: none;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        nav a {
+            text-decoration: none;
+            color: var(--text-secondary);
+            padding: 8px 18px;
+            border-radius: 40px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        nav a:hover, nav a.active {
+            background: linear-gradient(105deg, var(--accent-primary), var(--accent-secondary));
+            color: white;
+            box-shadow: 0 4px 12px var(--accent-glow);
+        }
+
+        .theme-toggle {
+            background: var(--bg-card);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border-color);
+            color: var(--accent-primary);
+            padding: 8px 18px;
+            border-radius: 40px;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 0.85rem;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .theme-toggle:hover {
+            transform: translateY(-2px);
+            border-color: var(--accent-primary);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-logout {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #ef4444;
+            padding: 8px 20px;
+            border-radius: 40px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-logout:hover {
+            background: rgba(239, 68, 68, 0.25);
+            transform: translateY(-2px);
+        }
+
+        .dashboard-container {
+            padding: 32px;
+        }
+
+        .page-header {
+            margin-bottom: 32px;
+        }
+        
+        .page-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        
+        .page-title i {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            margin-right: 12px;
+        }
+        
+        .page-subtitle {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        .student-info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 20px;
+            margin-bottom: 32px;
+        }
+        
+        .info-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+        
+        .info-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--accent-primary);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .info-card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .info-card-header i {
+            font-size: 1.5rem;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+        
+        .info-card-header h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+        
+        .info-card-content {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .info-label {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+        
+        .info-value {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .plan-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .plan-a { background: rgba(210, 105, 30, 0.2); color: var(--accent-primary); }
+        .plan-b { background: rgba(139, 69, 19, 0.2); color: #8b4513; }
+        [data-theme="dark"] .plan-b { color: #d2691e; }
+
+        .btn-primary {
+            background: linear-gradient(105deg, var(--accent-primary), var(--accent-secondary));
+            color: white;
+            padding: 12px 28px;
+            border: none;
+            border-radius: 40px;
+            cursor: pointer;
+            font-weight: 700;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9rem;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px var(--accent-glow);
+        }
+        
+        .btn-back {
+            background: var(--bg-card-solid);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+        
+        .btn-back:hover {
+            border-color: var(--accent-primary);
+            color: var(--accent-primary);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 80px;
+        }
+
+        .loading i {
+            font-size: 3rem;
+            color: var(--accent-primary);
+            margin-bottom: 16px;
+        }
+
+        .error-message {
+            text-align: center;
+            padding: 60px;
+            background: rgba(239, 68, 68, 0.1);
+            border-radius: 28px;
+            margin: 40px;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .footer {
+            margin-top: 48px;
+            padding: 32px 32px 24px;
+            background: var(--bg-card);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid var(--border-color);
+        }
+
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 32px;
+            margin-bottom: 24px;
+        }
+
+        .footer-section h4 {
+            margin-bottom: 12px;
+            font-size: 1rem;
+        }
+
+        .footer-section h4 i {
+            color: var(--accent-primary);
+            margin-right: 8px;
+        }
+
+        .footer-section p {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 24px;
+            border-top: 1px solid var(--border-color);
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .modules-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            background: var(--bg-card);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .modules-table thead {
+            background: linear-gradient(105deg, var(--accent-primary), var(--accent-secondary));
+            color: white;
+        }
+        
+        .modules-table th {
+            padding: 12px 15px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        
+        .modules-table th i {
+            margin-right: 5px;
+        }
+        
+        .modules-table tbody tr {
+            border-bottom: 1px solid var(--border-color);
+            transition: background-color 0.2s ease;
+        }
+        
+        .modules-table tbody tr:hover {
+            background: rgba(210, 105, 30, 0.1);
+        }
+        
+        [data-theme="dark"] .modules-table tbody tr:hover {
+            background: rgba(100, 255, 218, 0.1);
+        }
+        
+        .modules-table td {
+            padding: 12px 15px;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+        }
+        
+        .modules-table td i {
+            color: var(--accent-primary);
+            margin-right: 5px;
+            width: 16px;
+        }
+        
+        .module-code {
+            font-weight: 600;
+            color: var(--accent-primary);
+        }
+        
+        .text-left {
+            text-align: left;
+        }
+        
+        .text-center {
+            text-align: center;
+        }
+        
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+        
+        .status-upcoming { background: rgba(210, 105, 30, 0.15); color: var(--accent-primary); }
+        .status-in_progress { background: rgba(255, 193, 7, 0.15); color: #ffc107; }
+        .status-completed { background: rgba(40, 167, 69, 0.15); color: #28a745; }
+        .status-failed { background: rgba(220, 53, 69, 0.15); color: #dc3545; }
+        
+        [data-theme="dark"] .status-upcoming { background: rgba(100, 255, 218, 0.15); color: #64ffda; }
+        
+        .grade-badge {
+            background: rgba(40, 167, 69, 0.2);
+            color: #28a745;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            margin-left: 5px;
+        }
+        
+        .credits-badge {
+            background: rgba(210, 105, 30, 0.15);
+            color: var(--accent-primary);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+        
+        .semester-card {
+            background: var(--bg-card);
+            border-radius: 24px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+        
+        .semester-card:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+        
+        .semester-card.current {
+            border: 2px solid var(--accent-primary);
+            background-color: rgba(210, 105, 30, 0.05);
+        }
+        
+        [data-theme="dark"] .semester-card.current {
+            background-color: rgba(100, 255, 218, 0.05);
+        }
+        
+        .semester-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .semester-title {
+            color: var(--accent-primary);
+            font-size: 1.4rem;
+        }
+        
+        .semester-duration {
+            background: rgba(210, 105, 30, 0.1);
+            color: var(--accent-primary);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+        
+        .program-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding: 16px 20px;
+            background: var(--bg-card);
+            border-radius: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        @media (max-width: 768px) {
+            .dashboard-container {
+                padding: 20px;
+            }
+            .header {
+                flex-direction: column;
+                gap: 16px;
+                padding: 16px;
+            }
+            nav ul {
+                justify-content: center;
+            }
+            .student-info-grid {
+                grid-template-columns: 1fr;
+            }
+            .modules-table {
+                display: block;
+                overflow-x: auto;
+                white-space: nowrap;
+            }
+            .modules-table th,
+            .modules-table td {
+                padding: 8px 10px;
+                font-size: 0.8rem;
+            }
+            .semester-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+        
+        @media (min-width: 1200px) {
+            .dashboard-container {
+                max-width: 1400px;
+                margin: 0 auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="logo">
+                <i class="fas fa-graduation-cap"></i>
+                <h1>StudyPlan<span>Portal</span></h1>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="dashboard.html">Dashboard</a></li>
+                    <li><a href="studyplan.html" class="active">Study Plan</a></li>
+                    <li><a href="personal-plan.html">Personal Plan</a></li>
+                    <li><button class="theme-toggle" onclick="toggleTheme()">
+                        <i class="fas fa-moon"></i>
+                        <span class="theme-text">Dark</span>
+                    </button></li>
+                    <li><button id="logoutBtn" class="btn-logout"><i class="fas fa-sign-out-alt"></i> Logout</button></li>
+                </ul>
+            </nav>
+        </header>
+
+        <div class="dashboard-container">
+            <div id="loading" class="loading">
+                <i class="fas fa-spinner fa-spin"></i>
+                <div>Loading study plan...</div>
+            </div>
+            <div id="studyPlanContent" class="hidden"></div>
+        </div>
+
+        <footer class="footer">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4><i class="fas fa-university"></i> StudyPlan Portal</h4>
+                    <p></p>
+                </div>
+                <div class="footer-section">
+                    <h4><i class="fas fa-calendar"></i> Current Date</h4>
+                    <p id="currentDateDisplay"></p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 StudyPlan Portal | Empowering Education</p>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        document.getElementById('currentDateDisplay').textContent = new Date().toLocaleDateString('en-US', { 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+        });
+
+        function getSemesterName(semesterNum) {
+            if (semesterNum === 1) return "Year 1 Semester 1";
+            if (semesterNum === 2) return "Year 1 Semester 2";
+            if (semesterNum === 3) return "Year 1 Semester 3";
+            if (semesterNum === 4) return "Year 2 Semester 1";
+            if (semesterNum === 5) return "Year 2 Semester 2";
+            if (semesterNum === 6) return "Year 2 Semester 3";
+            if (semesterNum === 7) return "Year 3 Semester 1";
+            if (semesterNum === 8) return "Year 3 Semester 2";
+            if (semesterNum === 9) return "Year 3 Semester 3";
+            return `Semester ${semesterNum}`;
+        }
+
+        // Function to get course details
+        function getCourseDetails(courseId) {
+            const courses = {
+                'DIT': { 
+                    id: 'DIT', 
+                    name: 'Diploma in IT', 
+                    full_name: 'Diploma in Information Technology', 
+                    duration_years: 2, 
+                    total_semesters: 6, 
+                    total_credits: 90 
+                },
+                'BIT': { 
+                    id: 'BIT', 
+                    name: 'Bachelor of IT', 
+                    full_name: 'Bachelor of Information Technology', 
+                    duration_years: 3, 
+                    total_semesters: 9, 
+                    total_credits: 120 
+                },
+                'BAI': { 
+                    id: 'BAI', 
+                    name: 'Bachelor of AI', 
+                    full_name: 'Bachelor of Artificial Intelligence', 
+                    duration_years: 3, 
+                    total_semesters: 9, 
+                    total_credits: 120 
+                },
+                'BDS': { 
+                    id: 'BDS', 
+                    name: 'Bachelor of Data Science', 
+                    full_name: 'Bachelor of Data Science', 
+                    duration_years: 3, 
+                    total_semesters: 9, 
+                    total_credits: 120 
+                }
+            };
+            return courses[courseId] || courses['DIT'];
+        }
+
+        // Improved enrollment fetch function
+        async function fetchStudentEnrollment(studentId) {
+            try {
+                // Try to get enrollment from database
+                let enrollment = await window.dataManager.getStudentEnrollment(studentId);
+                
+                if (enrollment && enrollment.course_id) {
+                    console.log('✅ Enrollment found in database:', enrollment);
+                    return enrollment;
+                }
+                
+                // If no enrollment in database, try to get from user object
+                const user = window.dataManager.getCurrentUser();
+                if (user && user.enrollment) {
+                    console.log('✅ Enrollment found in user object:', user.enrollment);
+                    return user.enrollment;
+                }
+                
+                // If still no enrollment, create a default one based on student ID pattern
+                console.log('⚠️ Creating default enrollment from student ID pattern...');
+                
+                let intakeYear = 2024;
+                let intakeMonth = '05';
+                let courseId = 'DIT';
+                
+                if (studentId && studentId.length >= 4) {
+                    const yearPrefix = studentId.substring(0, 2);
+                    const monthCode = studentId.substring(2, 4);
+                    intakeYear = 2000 + parseInt(yearPrefix);
+                    intakeMonth = monthCode;
+                    
+                    if (studentId.includes('BIT')) courseId = 'BIT';
+                    else if (studentId.includes('BAI')) courseId = 'BAI';
+                    else if (studentId.includes('BDS')) courseId = 'BDS';
+                    else if (studentId.includes('DIT')) courseId = 'DIT';
+                }
+                
+                enrollment = {
+                    course_id: courseId,
+                    intake_year: intakeYear,
+                    intake_month: intakeMonth,
+                    study_plan: 'B',
+                    courses: getCourseDetails(courseId)
+                };
+                
+                console.log('📝 Created default enrollment:', enrollment);
+                return enrollment;
+                
+            } catch (error) {
+                console.error('Error fetching enrollment:', error);
+                return null;
+            }
+        }
+
+        (async function() {
+            const loadingEl = document.getElementById('loading');
+            const contentEl = document.getElementById('studyPlanContent');
+            
+            try {
+                if (!window.dataManager) {
+                    throw new Error('System not initialized');
+                }
+                
+                if (!window.dataManager.getCurrentUser()) {
+                    await new Promise(resolve => {
+                        window.addEventListener('supabaseCoreReady', resolve, { once: true });
+                        setTimeout(resolve, 2000);
+                    });
+                }
+                
+                const user = window.dataManager.getCurrentUser();
+                console.log('Current user:', user);
+                
+                if (!user) {
+                    window.location.href = 'index.html';
+                    return;
+                }
+                
+                if (user.role !== 'student') {
+                    window.location.href = 'lecturer-dashboard.html';
+                    return;
+                }
+                
+                // Fetch enrollment using the improved function
+                let enrollment = await fetchStudentEnrollment(user.id || user.email);
+                
+                if (!enrollment) {
+                    throw new Error('No enrollment found. Please make sure you are registered for a course.');
+                }
+                
+                console.log('Final enrollment data:', enrollment);
+                
+                const courseId = enrollment.course_id || 'DIT';
+                const studyPlanType = enrollment.study_plan || 'B';
+                const intakeYear = enrollment.intake_year || 2024;
+                const intakeMonth = enrollment.intake_month || '05';
+                
+                const course = getCourseDetails(courseId);
+                const intakeName = intakeMonth === '01' ? 'January' : intakeMonth === '05' ? 'May' : 'September';
+                
+                console.log(`📚 User ${user.id} - Course: ${courseId}, Study Plan: ${studyPlanType}, Intake: ${intakeMonth}/${intakeYear}`);
+                
+                // Load study plan from database
+                const studyPlan = await window.dataManager.loadStudyPlan(
+                    courseId, 
+                    intakeYear, 
+                    intakeMonth,
+                    studyPlanType
+                );
+                
+                if (!studyPlan) {
+                    throw new Error(`Study plan not found for ${courseId} Plan ${studyPlanType}`);
+                }
+                
+                console.log(`✅ Loaded plan: ${studyPlan.name || 'Unnamed'}`);
+                
+                // Get module status
+                const moduleStatus = await window.dataManager.getModuleStatus(user.id || user.email);
+                const statusMap = {};
+                moduleStatus.forEach(m => {
+                    statusMap[m.module_code] = m;
+                });
+                
+                // Calculate current semester
+                const intakeDate = new Date(parseInt(intakeYear), 
+                    intakeMonth === '01' ? 0 : intakeMonth === '05' ? 4 : 8, 1);
+                const monthsDiff = (new Date().getFullYear() - intakeDate.getFullYear()) * 12 + 
+                                  (new Date().getMonth() - intakeDate.getMonth());
+                let calculatedSemester = Math.floor(monthsDiff / 4) + 1;
+                const maxSemesters = course.total_semesters;
+                const currentSemester = Math.min(Math.max(calculatedSemester, 1), maxSemesters);
+                
+                // Build semesters HTML
+                let semestersHtml = '';
+                
+                for (let i = 1; i <= maxSemesters; i++) {
+                    const semesterModules = studyPlan[`semester_${i}_modules`] || [];
+                    const semesterName = getSemesterName(i);
+                    const yearNum = Math.ceil(i / 3);
+                    const semInYear = ((i - 1) % 3) + 1;
+                    const isCurrent = i === currentSemester;
+                    
+                    let modulesHtml = `
+                        <table class="modules-table">
+                            <thead>
+                                <tr>
+                                    <th><i class="fas fa-hashtag"></i> Code</th>
+                                    <th class="text-left"><i class="fas fa-book"></i> Module Name</th>
+                                    <th><i class="fas fa-credit-card"></i> Credits</th>
+                                    <th class="text-left"><i class="fas fa-tag"></i> Classification</th>
+                                    <th><i class="fas fa-chart-line"></i> Status</th>
+                                    <th><i class="fas fa-star"></i> Grade</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+                    
+                    if (semesterModules.length > 0) {
+                        semesterModules.forEach(module => {
+                            const status = statusMap[module.code] || { status: 'upcoming', grade: null };
+                            let statusText = status.status ? 
+                                (status.status.charAt(0).toUpperCase() + status.status.slice(1).replace('_', ' ')) : 
+                                'Upcoming';
+                            let statusClass = status.status || 'upcoming';
+                            if (statusClass === 'in-progress') statusClass = 'in_progress';
+                            
+                            modulesHtml += `
+                                <tr>
+                                    <td class="module-code">${module.code}</td>
+                                    <td class="text-left">${module.name}</td>
+                                    <td>${module.credits}</td>
+                                    <td class="text-left">${module.classification || 'Core'}</td>
+                                    <td>
+                                        <span class="status-badge status-${statusClass}">
+                                            ${statusText}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        ${status.grade ? `<span class="grade-badge">${status.grade}</span>` : '-'}
+                                    </td>
+                                </tr>
+                            `;
+                        });
+                    } else {
+                        modulesHtml += `
+                            <tr>
+                                <td colspan="6" class="text-center" style="color: var(--text-secondary); padding: 30px;">
+                                    <i class="fas fa-info-circle"></i> No modules scheduled for this semester
+                                </td>
+                            </tr>
+                        `;
+                    }
+                    
+                    modulesHtml += `
+                            </tbody>
+                        </table>
+                    `;
+                    
+                    semestersHtml += `
+                        <div class="semester-card ${isCurrent ? 'current' : ''}">
+                            <div class="semester-header">
+                                <h3 class="semester-title">
+                                    <i class="fas fa-book-open"></i> ${semesterName}
+                                    ${isCurrent ? '<span style="color: var(--accent-primary); margin-left: 10px; font-size: 0.9rem;">(Current)</span>' : ''}
+                                </h3>
+                                <div>
+                                    <span class="semester-duration">Year ${yearNum} · Sem ${semInYear}/3</span>
+                                    <span class="credits-badge" style="margin-left: 10px;">Semester ${i}</span>
+                                </div>
+                            </div>
+                            ${modulesHtml}
+                        </div>
+                    `;
+                }
+                
+                contentEl.innerHTML = `
+                    <div class="page-header">
+                        <h1 class="page-title">
+                            <i class="fas fa-calendar-alt"></i> Official Study Plan
+                        </h1>
+                        <p class="page-subtitle">Your prescribed program structure based on intake and study plan</p>
+                    </div>
+                    
+                    <div class="student-info-grid">
+                        <div class="info-card">
+                            <div class="info-card-header">
+                                <i class="fas fa-user-graduate"></i>
+                                <h3>Student Information</h3>
+                            </div>
+                            <div class="info-card-content">
+                                <div class="info-row">
+                                    <span class="info-label"><i class="fas fa-user"></i> Name</span>
+                                    <span class="info-value">${user.name || 'Student'}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label"><i class="fas fa-id-card"></i> Student ID</span>
+                                    <span class="info-value">${user.id || user.email}</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="info-card">
+                            <div class="info-card-header">
+                                <i class="fas fa-graduation-cap"></i>
+                                <h3>Program Information</h3>
+                            </div>
+                            <div class="info-card-content">
+                                <div class="info-row">
+                                    <span class="info-label"><i class="fas fa-book"></i> Program</span>
+                                    <span class="info-value">${course.full_name}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label"><i class="fas fa-layer-group"></i> Study Plan</span>
+                                    <span class="info-value">
+                                        <span class="plan-badge plan-${studyPlanType.toLowerCase()}">Plan ${studyPlanType}</span>
+                                    </span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label"><i class="fas fa-calendar-alt"></i> Intake</span>
+                                    <span class="info-value">${intakeName} ${intakeYear}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="program-header">
+                        <div>
+                            <i class="fas fa-calendar-alt" style="color: var(--accent-primary); margin-right: 8px;"></i>
+                            <strong>3 Semesters per Year Structure</strong>
+                            <span style="color: var(--text-secondary); margin-left: 12px; font-size: 0.85rem;">
+                                <i class="fas fa-info-circle"></i> Each academic year has 3 semesters
+                            </span>
+                        </div>
+                        <button class="btn-primary btn-back" onclick="window.location.href='dashboard.html'">
+                            <i class="fas fa-arrow-left"></i> Back to Dashboard
+                        </button>
+                    </div>
+                    
+                    ${semestersHtml}
+                `;
+                
+                loadingEl.classList.add('hidden');
+                contentEl.classList.remove('hidden');
+                
+            } catch (error) {
+                console.error('❌ Study plan error:', error);
+                loadingEl.innerHTML = `
+                    <div class="error-message">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <h3>Error Loading Study Plan</h3>
+                        <p>${error.message}</p>
+                        <p style="margin-top: 10px; font-size: 0.85rem;">Please ensure you are properly enrolled in a course.</p>
+                        <button onclick="location.reload()" class="btn-primary" style="margin-top: 20px;">
+                            <i class="fas fa-sync-alt"></i> Try Again
+                        </button>
+                    </div>
+                `;
+            }
+        })();
+
+        window.toggleTheme = function() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            
+            const icon = document.querySelector('.theme-toggle i');
+            const text = document.querySelector('.theme-text');
+            if (newTheme === 'light') {
+                icon.className = 'fas fa-sun';
+                text.textContent = 'Light';
+            } else {
+                icon.className = 'fas fa-moon';
+                text.textContent = 'Dark';
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            
+            const icon = document.querySelector('.theme-toggle i');
+            const text = document.querySelector('.theme-text');
+            if (savedTheme === 'light') {
+                icon.className = 'fas fa-sun';
+                text.textContent = 'Light';
+            } else {
+                icon.className = 'fas fa-moon';
+                text.textContent = 'Dark';
+            }
+        });
+
+        document.getElementById('logoutBtn')?.addEventListener('click', function() {
+            if (window.dataManager) {
+                window.dataManager.clearCurrentUser();
+            }
+            window.location.href = 'index.html';
+        });
+    </script>
+</body>
+</html>

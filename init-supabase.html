@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Initialize Supabase Database</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a192f 0%, #112240 100%);
+            color: #e6f1ff;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: rgba(17, 34, 64, 0.95);
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        h1, h2 { color: #64ffda; margin-bottom: 20px; }
+        h1 { border-bottom: 1px solid rgba(100,255,218,0.2); padding-bottom: 15px; }
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        button {
+            background: linear-gradient(135deg, #64ffda 0%, #4fd1c5 100%);
+            color: #0a192f;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(100,255,218,0.4);
+        }
+        button.secondary {
+            background: rgba(100,255,218,0.1);
+            color: #64ffda;
+            border: 1px solid rgba(100,255,218,0.3);
+        }
+        .output {
+            background: #0a192f;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-family: monospace;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .sql-box {
+            background: #1e3a5f;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border: 1px solid #64ffda;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 500px;
+            overflow-y: auto;
+            font-size: 0.85rem;
+        }
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .status-good { background: rgba(40,167,69,0.1); border: 1px solid #28a745; color: #28a745; }
+        .status-bad { background: rgba(220,53,69,0.1); border: 1px solid #dc3545; color: #dc3545; }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .warning { color: #ffc107; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1><i class="fas fa-database"></i> Supabase Database Initialization</h1>
+        
+        <div id="status" class="status">
+            <i class="fas fa-info-circle"></i> Ready to initialize database...
+        </div>
+
+        <div class="button-group">
+            <button onclick="openSQLEditor()">
+                <i class="fas fa-external-link-alt"></i> Open SQL Editor
+            </button>
+            <button class="secondary" onclick="insertUsers()">
+                <i class="fas fa-users"></i> Insert Users
+            </button>
+            <button class="secondary" onclick="testConnection()">
+                <i class="fas fa-plug"></i> Test Connection
+            </button>
+        </div>
+
+        <h2><i class="fas fa-code"></i> SQL Schema</h2>
+        <div class="sql-box" id="sqlSchema">
+-- ====== SUPABASE DATABASE SCHEMA ======
+-- Run this in your Supabase SQL Editor
+
+DROP TABLE IF EXISTS lecturer_notes CASCADE;
+DROP TABLE IF EXISTS module_status CASCADE;
+DROP TABLE IF EXISTS semester_progress CASCADE;
+DROP TABLE IF EXISTS personal_plans CASCADE;
+DROP TABLE IF EXISTS study_plans CASCADE;
+DROP TABLE IF EXISTS users CASCADE;
+
+-- USERS TABLE
+CREATE TABLE IF NOT EXISTS users (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    intake TEXT NOT NULL,
+    year TEXT NOT NULL,
+    password TEXT NOT NULL,
+    role TEXT DEFAULT 'student',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- STUDY PLANS TABLE
+CREATE TABLE IF NOT EXISTS study_plans (
+    id SERIAL PRIMARY KEY,
+    plan_type TEXT NOT NULL UNIQUE,
+    name TEXT NOT NULL,
+    duration TEXT NOT NULL,
+    total_credits INTEGER DEFAULT 90,
+    credit_requirements JSONB NOT NULL,
+    classifications JSONB NOT NULL,
+    semesters JSONB NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- PERSONAL PLANS TABLE
+CREATE TABLE IF NOT EXISTS personal_plans (
+    id SERIAL PRIMARY KEY,
+    student_id TEXT REFERENCES users(id) ON DELETE CASCADE UNIQUE,
+    plan_data JSONB NOT NULL,
+    is_customized BOOLEAN DEFAULT FALSE,
+    last_modified TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- MODULE STATUS TABLE
+CREATE TABLE IF NOT EXISTS module_status (
+    id SERIAL PRIMARY KEY,
+    student_id TEXT REFERENCES users(id) ON DELETE CASCADE,
+    module_code TEXT NOT NULL,
+    status TEXT DEFAULT 'upcoming',
+    grade TEXT,
+    taken_in_semester INTEGER,
+    is_hidden BOOLEAN DEFAULT FALSE,
+    last_updated TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(student_id, module_code)
+);
+
+-- SEMESTER PROGRESS TABLE
+CREATE TABLE IF NOT EXISTS semester_progress (
+    id SERIAL PRIMARY KEY,
+    student_id TEXT REFERENCES users(id) ON DELETE CASCADE,
+    semester_index INTEGER NOT NULL,
+    semester_name TEXT,
+    credits_earned INTEGER DEFAULT 0,
+    is_completed BOOLEAN DEFAULT FALSE,
+    UNIQUE(student_id, semester_index)
+);
+
+-- LECTURER NOTES TABLE
+CREATE TABLE IF NOT EXISTS lecturer_notes (
+    id SERIAL PRIMARY KEY,
+    lecturer_id TEXT REFERENCES users(id) ON DELETE CASCADE,
+    student_id TEXT REFERENCES users(id) ON DELETE CASCADE,
+    note TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- INDEXES
+CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
+CREATE INDEX IF NOT EXISTS idx_users_intake ON users(intake);
+CREATE INDEX IF NOT EXISTS idx_module_status_student ON module_status(student_id);
+CREATE INDEX IF NOT EXISTS idx_personal_plans_student ON personal_plans(student_id);
+CREATE INDEX IF NOT EXISTS idx_lecturer_notes_student ON lecturer_notes(student_id);
+
+-- ROW LEVEL SECURITY
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE study_plans ENABLE ROW LEVEL SECURITY;
+ALTER TABLE personal_plans ENABLE ROW LEVEL SECURITY;
+ALTER TABLE module_status ENABLE ROW LEVEL SECURITY;
+ALTER TABLE semester_progress ENABLE ROW LEVEL SECURITY;
+ALTER TABLE lecturer_notes ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Enable read access for all users" ON users FOR SELECT USING (true);
+CREATE POLICY "Enable read access for all users" ON study_plans FOR SELECT USING (true);
+CREATE POLICY "Enable all access for authenticated users" ON personal_plans FOR ALL USING (true);
+CREATE POLICY "Enable all access for authenticated users" ON module_status FOR ALL USING (true);
+CREATE POLICY "Enable all access for authenticated users" ON semester_progress FOR ALL USING (true);
+CREATE POLICY "Enable all access for authenticated users" ON lecturer_notes FOR ALL USING (true);
+
+-- DEFAULT USERS
+INSERT INTO users (id, name, intake, year, password, role) VALUES
+    ('Marwan', 'Marwan', '00', '2024', '123456', 'lecturer'),
+    ('2405001', 'Marwan Student', '05', '2024', '123456', 'student'),
+    ('2409001', 'Avi', '09', '2024', '123456', 'student'),
+    ('2501001', 'Isaac', '01', '2025', '123456', 'student'),
+    ('2505001', 'Andrew', '05', '2025', '123456', 'student'),
+    ('2509001', 'Rashwni', '09', '2025', '123456', 'student'),
+    ('2601001', 'Logan', '01', '2026', '123456', 'student')
+ON CONFLICT (id) DO NOTHING;
+
+-- DEFAULT STUDY PLANS
+INSERT INTO study_plans (plan_type, name, duration, total_credits, credit_requirements, classifications, semesters) VALUES
+('A', 'Diploma in Information Technology - Plan A', '2 Years (6 Semesters)', 90, 
+ '{"core": 39, "disciplineCore": 26, "compulsory": 6, "industrial": 6, "elective": 8, "project": 5}'::jsonb,
+ '{"core": "Core Subjects", "disciplineCore": "Discipline Core", "compulsory": "Compulsory University Subjects", "industrial": "Industrial Training", "elective": "Elective Subjects", "project": "Final Year Project"}'::jsonb,
+ '[]'::jsonb)
+ON CONFLICT (plan_type) DO NOTHING;
+
+INSERT INTO study_plans (plan_type, name, duration, total_credits, credit_requirements, classifications, semesters) VALUES
+('B', 'Diploma in Information Technology - Plan B', '2 Years (6 Semesters)', 90,
+ '{"core": 39, "disciplineCore": 26, "compulsory": 6, "industrial": 6, "elective": 8, "project": 5}'::jsonb,
+ '{"core": "Core Subjects", "disciplineCore": "Discipline Core", "compulsory": "Compulsory University Subjects", "industrial": "Industrial Training", "elective": "Elective Subjects", "project": "Final Year Project"}'::jsonb,
+ '[]'::jsonb)
+ON CONFLICT (plan_type) DO NOTHING;
+        </div>
+
+        <h2><i class="fas fa-terminal"></i> Output</h2>
+        <div id="output" class="output">
+            Ready to initialize...
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <script>
+    // Initialize Supabase once
+    const supabaseClient = window.supabase.createClient(
+        'https://qacyxebxnvpsxxulbuws.supabase.co',
+        'sb_publishable_7Ie0VFo_0uCr9UzNw92eag_0vDpm6eY'
+    );
+    
+    const output = document.getElementById('output');
+    const status = document.getElementById('status');
+    
+    function log(message, type = 'info') {
+        const color = type === 'success' ? '#28a745' : 
+                     type === 'error' ? '#dc3545' : 
+                     type === 'warning' ? '#ffc107' : '#64ffda';
+        const icon = type === 'success' ? 'check-circle' : 
+                    type === 'error' ? 'exclamation-circle' : 
+                    type === 'warning' ? 'exclamation-triangle' : 'info-circle';
+        
+        output.innerHTML += `<div style="color: ${color}; margin-bottom: 5px;">
+            <i class="fas fa-${icon}"></i> ${message}
+        </div>`;
+        output.scrollTop = output.scrollHeight;
+    }
+
+    function openSQLEditor() {
+        window.open('https://app.supabase.com/project/qacyxebxnvpsxxulbuws/sql', '_blank');
+        log('🔗 Opened Supabase SQL Editor', 'info');
+    }
+
+    async function testConnection() {
+        log('🧪 Testing Supabase connection...', 'info');
+        
+        try {
+            const { error } = await supabaseClient
+                .from('users')
+                .select('count', { count: 'exact', head: true });
+            
+            if (error) {
+                if (error.message.includes('relation "users" does not exist')) {
+                    log('❌ Tables not created - Run SQL schema first!', 'error');
+                    status.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Tables not found - Run SQL';
+                    status.className = 'status status-bad';
+                } else throw error;
+            } else {
+                log('✅ Connection successful!', 'success');
+                status.innerHTML = '<i class="fas fa-check-circle"></i> Connected to Supabase';
+                status.className = 'status status-good';
+                return true;
+            }
+        } catch (error) {
+            log(`❌ Connection failed: ${error.message}`, 'error');
+            status.innerHTML = '<i class="fas fa-exclamation-circle"></i> Connection failed';
+            status.className = 'status status-bad';
+        }
+        return false;
+    }
+
+    async function insertUsers() {
+        log('📝 Inserting default users...', 'info');
+        
+        try {
+            const { error: checkError } = await supabaseClient
+                .from('users')
+                .select('id')
+                .limit(1);
+            
+            if (checkError && checkError.message.includes('relation "users" does not exist')) {
+                log('❌ Users table not found - Run SQL schema first!', 'error');
+                return;
+            }
+            
+            const defaultUsers = [
+                { id: 'Marwan', name: 'Marwan', intake: '00', year: '2024', password: '123456', role: 'lecturer' },
+                { id: '2405001', name: 'Marwan Student', intake: '05', year: '2024', password: '123456', role: 'student' },
+                { id: '2409001', name: 'Avi', intake: '09', year: '2024', password: '123456', role: 'student' },
+                { id: '2501001', name: 'Isaac', intake: '01', year: '2025', password: '123456', role: 'student' },
+                { id: '2505001', name: 'Andrew', intake: '05', year: '2025', password: '123456', role: 'student' },
+                { id: '2509001', name: 'Rashwni', intake: '09', year: '2025', password: '123456', role: 'student' },
+                { id: '2601001', name: 'Logan', intake: '01', year: '2026', password: '123456', role: 'student' }
+            ];
+            
+            let success = 0;
+            
+            for (const user of defaultUsers) {
+                const { error } = await supabaseClient
+                    .from('users')
+                    .upsert(user, { onConflict: 'id' });
+                
+                if (!error) {
+                    success++;
+                    log(`✅ Inserted: ${user.id} (${user.role})`, 'success');
+                } else {
+                    log(`❌ Failed: ${user.id} - ${error.message}`, 'error');
+                }
+            }
+            
+            log(`📊 Summary: ${success}/${defaultUsers.length} users inserted`, 
+                success === defaultUsers.length ? 'success' : 'warning');
+            
+            if (success === defaultUsers.length) {
+                status.innerHTML = '<i class="fas fa-check-circle"></i> All users inserted successfully!';
+                status.className = 'status status-good';
+            }
+        } catch (error) {
+            log(`❌ Error: ${error.message}`, 'error');
+        }
+    }
+
+    // Make functions globally available
+    window.openSQLEditor = openSQLEditor;
+    window.testConnection = testConnection;
+    window.insertUsers = insertUsers;
+    
+    // Initialize
+    window.onload = function() {
+        log('👋 Welcome to Supabase Database Initialization Tool', 'info');
+        log('1️⃣ Step 1: Click "Open SQL Editor" and run the SQL schema', 'warning');
+        log('2️⃣ Step 2: Click "Test Connection" to verify', 'info');
+        log('3️⃣ Step 3: Click "Insert Users" to add default accounts', 'info');
+    };
+</script>
+</body>
+</html>

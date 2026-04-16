@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Diagnostic Tool</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <h1>Diagnostic Tool</h1>
+    <div id="output"></div>
+    <script>
+        const output = document.getElementById('output');
+        
+        function log(msg, color = 'black') {
+            output.innerHTML += `<div style="color: ${color}; margin: 5px; padding: 5px; border-bottom: 1px solid #ccc;">${msg}</div>`;
+        }
+
+        // Test 1: Check if files exist
+        async function testFile(filename) {
+            try {
+                const response = await fetch(filename);
+                if (response.ok) {
+                    const text = await response.text();
+                    log(`✅ ${filename} - Found (${text.length} bytes)`, 'green');
+                    return true;
+                } else {
+                    log(`❌ ${filename} - Not Found (404)`, 'red');
+                    return false;
+                }
+            } catch (error) {
+                log(`❌ ${filename} - Error: ${error.message}`, 'red');
+                return false;
+            }
+        }
+
+        // Run tests
+        (async function() {
+            log('=== DIAGNOSTIC TEST ===', 'blue');
+            log(`Current URL: ${window.location.href}`, 'black');
+            
+            await testFile('supabase-core.js');
+            await testFile('dashboard.html');
+            await testFile('studyplan.html');
+            
+            log('\n=== SCRIPT CHECK ===', 'blue');
+            
+            // Try to load supabase-core.js dynamically
+            const script = document.createElement('script');
+            script.src = 'supabase-core.js';
+            script.onload = () => log('✅ supabase-core.js loaded dynamically', 'green');
+            script.onerror = () => log('❌ supabase-core.js failed to load dynamically', 'red');
+            document.head.appendChild(script);
+            
+            setTimeout(() => {
+                log('\n=== GLOBAL OBJECTS ===', 'blue');
+                log(`window.supabase: ${window.supabase ? '✅' : '❌'}`, window.supabase ? 'green' : 'red');
+                log(`window.dbManager: ${window.dbManager ? '✅' : '❌'}`, window.dbManager ? 'green' : 'red');
+                log(`window.dataManager: ${window.dataManager ? '✅' : '❌'}`, window.dataManager ? 'green' : 'red');
+            }, 1000);
+        })();
+    </script>
+</body>
+</html>

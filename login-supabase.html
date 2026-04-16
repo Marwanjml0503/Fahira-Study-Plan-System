@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudyPlan Portal - Login</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a192f 0%, #112240 100%);
+            color: #e6f1ff;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .login-box {
+            background: rgba(17, 34, 64, 0.95);
+            padding: 40px;
+            border-radius: 10px;
+            width: 100%;
+            max-width: 400px;
+            border: 1px solid rgba(100, 255, 218, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo i {
+            font-size: 3rem;
+            color: #64ffda;
+            margin-bottom: 15px;
+        }
+        .logo h1 {
+            color: #64ffda;
+            font-size: 2rem;
+        }
+        .logo span {
+            color: #e6f1ff;
+        }
+        .logo p {
+            color: #8892b0;
+            margin-top: 10px;
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        .input-group label {
+            display: block;
+            color: #64ffda;
+            margin-bottom: 8px;
+        }
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            background: rgba(10, 25, 47, 0.8);
+            border: 1px solid rgba(100, 255, 218, 0.2);
+            border-radius: 5px;
+            color: #e6f1ff;
+            font-size: 1rem;
+        }
+        .input-group input:focus {
+            outline: none;
+            border-color: #64ffda;
+            box-shadow: 0 0 10px rgba(100, 255, 218, 0.2);
+        }
+        .btn-login {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #64ffda 0%, #4fd1c5 100%);
+            color: #0a192f;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(100, 255, 218, 0.4);
+        }
+        .btn-secondary {
+            background: rgba(100, 255, 218, 0.1);
+            color: #64ffda;
+            border: 1px solid rgba(100, 255, 218, 0.3);
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .btn-secondary:hover {
+            background: rgba(100, 255, 218, 0.2);
+        }
+        .error-message {
+            background: rgba(255, 107, 107, 0.1);
+            border: 1px solid rgba(255, 107, 107, 0.3);
+            color: #ff6b6b;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        .success-message {
+            background: rgba(40, 167, 69, 0.1);
+            border: 1px solid #28a745;
+            color: #28a745;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        .test-buttons {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            justify-content: center;
+        }
+        .demo-box {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(100, 255, 218, 0.05);
+            border-radius: 5px;
+            font-size: 0.85rem;
+            border: 1px solid rgba(100, 255, 218, 0.1);
+        }
+        .demo-box strong {
+            color: #64ffda;
+        }
+        .status-box {
+            margin-bottom: 20px;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 0.85rem;
+            display: none;
+        }
+        .status-success {
+            background: rgba(40, 167, 69, 0.1);
+            border: 1px solid #28a745;
+            color: #28a745;
+        }
+        .status-error {
+            background: rgba(220, 53, 69, 0.1);
+            border: 1px solid #dc3545;
+            color: #dc3545;
+        }
+        .status-info {
+            background: rgba(100, 255, 218, 0.1);
+            border: 1px solid #64ffda;
+            color: #64ffda;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-box">
+        <div class="logo">
+            <i class="fas fa-graduation-cap"></i>
+            <h1>StudyPlan<span>Portal</span></h1>
+            <p>Your personalized academic planning tool</p>
+        </div>
+        
+        <div id="statusMessage" class="status-box"></div>
+        <div id="errorMessage" class="error-message"></div>
+        <div id="successMessage" class="success-message"></div>
+        
+        <form id="loginForm">
+            <div class="input-group">
+                <label><i class="fas fa-id-card"></i> Student / Lecturer ID</label>
+                <input type="text" id="studentId" placeholder="e.g., 2405001 or Marwan" required>
+            </div>
+            <div class="input-group">
+                <label><i class="fas fa-lock"></i> Password</label>
+                <input type="password" id="password" placeholder="Enter password" required>
+            </div>
+            <button type="submit" class="btn-login">
+                <i class="fas fa-sign-in-alt"></i> Login
+            </button>
+        </form>
+        
+        <div class="test-buttons">
+            <button type="button" class="btn-secondary" onclick="window.fillLecturer()">
+                <i class="fas fa-user-tie"></i> Lecturer
+            </button>
+            <button type="button" class="btn-secondary" onclick="window.fillStudent()">
+                <i class="fas fa-user-graduate"></i> Student
+            </button>
+            <button type="button" class="btn-secondary" onclick="window.testConnection()">
+                <i class="fas fa-plug"></i> Test DB
+            </button>
+        </div>
+        
+        <div class="demo-box">
+            <strong><i class="fas fa-info-circle"></i> Demo Credentials:</strong><br>
+            <span style="color: #64ffda;">Lecturer:</span> Marwan / 123456<br>
+            <span style="color: #64ffda;">Student:</span> 2405001 / 123456<br>
+            <small style="color: #8892b0; display: block; margin-top: 10px;">
+                <i class="fas fa-database"></i> Supabase: qacyxebxnvpsxxulbuws
+            </small>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <script>
+        // ============================================
+        // SUPABASE CONFIGURATION - FIXED
+        // ============================================
+        (function() {
+            // Use a different variable name to avoid conflict
+            const SUPABASE_URL = 'https://qacyxebxnvpsxxulbuws.supabase.co';
+            const SUPABASE_ANON_KEY = 'sb_publishable_7Ie0VFo_0uCr9UzNw92eag_0vDpm6eY';
+            
+            // Initialize Supabase client with a unique name
+            window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            
+            // ============================================
+            // DATABASE MANAGER
+            // ============================================
+            class DatabaseManager {
+                constructor() {
+                    this.supabase = window.supabaseClient;
+                    console.log('✅ DatabaseManager initialized');
+                }
+
+                async checkConnection() {
+                    try {
+                        const { error } = await this.supabase
+                            .from('users')
+                            .select('count', { count: 'exact', head: true });
+                        
+                        if (error) throw error;
+                        return { success: true };
+                    } catch (error) {
+                        return { success: false, error: error.message };
+                    }
+                }
+
+                async authenticateUser(id, password) {
+                    try {
+                        console.log(`Authenticating: ${id}`);
+                        const { data, error } = await this.supabase
+                            .from('users')
+                            .select('*')
+                            .eq('id', id)
+                            .eq('password', password)
+                            .maybeSingle();
+                        
+                        if (error) throw error;
+                        if (!data) return { success: false, error: 'Invalid credentials' };
+                        
+                        return { success: true, user: data };
+                    } catch (error) {
+                        return { success: false, error: error.message };
+                    }
+                }
+
+                async getAllUsers() {
+                    try {
+                        const { data, error } = await this.supabase
+                            .from('users')
+                            .select('*')
+                            .order('name');
+                        
+                        if (error) throw error;
+                        return { success: true, data: data || [] };
+                    } catch (error) {
+                        return { success: false, error: error.message, data: [] };
+                    }
+                }
+            }
+
+            // ============================================
+            // DATA MANAGER
+            // ============================================
+            class SupabaseDataManager {
+                constructor(dbManager) {
+                    this.db = dbManager;
+                    console.log('✅ DataManager initialized');
+                }
+
+                async authenticateUser(id, password) {
+                    return await this.db.authenticateUser(id, password);
+                }
+
+                getCurrentUser() {
+                    const userStr = localStorage.getItem('currentUser');
+                    try {
+                        return userStr ? JSON.parse(userStr) : null;
+                    } catch (e) {
+                        return null;
+                    }
+                }
+
+                saveCurrentUser(user) {
+                    if (!user) return;
+                    localStorage.setItem('currentUser', JSON.stringify({
+                        id: user.id,
+                        name: user.name,
+                        intake: user.intake,
+                        year: user.year,
+                        role: user.role || 'student'
+                    }));
+                }
+
+                clearCurrentUser() {
+                    localStorage.removeItem('currentUser');
+                }
+
+                getIntakeName(intakeCode) {
+                    const map = { '00': 'Lecturer', '01': 'January', '05': 'May', '09': 'September' };
+                    return map[intakeCode] || 'Unknown';
+                }
+            }
+
+            // ============================================
+            // CREATE INSTANCES - ATTACH TO WINDOW
+            // ============================================
+            window.dbManager = new DatabaseManager();
+            window.dataManager = new SupabaseDataManager(window.dbManager);
+        })();
+
+        // ============================================
+        // UI FUNCTIONS - ATTACH TO WINDOW
+        // ============================================
+        window.showStatus = function(message, type = 'info') {
+            const statusEl = document.getElementById('statusMessage');
+            statusEl.style.display = 'block';
+            statusEl.className = 'status-box status-' + type;
+            statusEl.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i> ${message}`;
+        };
+
+        window.hideStatus = function() {
+            document.getElementById('statusMessage').style.display = 'none';
+        };
+
+        window.fillLecturer = function() {
+            document.getElementById('studentId').value = 'Marwan';
+            document.getElementById('password').value = '123456';
+            window.showStatus('Lecturer credentials filled', 'info');
+        };
+
+        window.fillStudent = function() {
+            document.getElementById('studentId').value = '2405001';
+            document.getElementById('password').value = '123456';
+            window.showStatus('Student credentials filled', 'info');
+        };
+
+        window.testConnection = async function() {
+            window.showStatus('Testing database connection...', 'info');
+            
+            try {
+                const result = await window.dbManager.checkConnection();
+                
+                if (result.success) {
+                    const users = await window.dbManager.getAllUsers();
+                    window.showStatus(`✅ Database connected! Found ${users.data.length} users.`, 'success');
+                } else {
+                    window.showStatus(`❌ Connection failed: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                window.showStatus(`❌ Error: ${error.message}`, 'error');
+            }
+        };
+
+        // ============================================
+        // LOGIN HANDLER
+        // ============================================
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const id = document.getElementById('studentId').value.trim();
+            const password = document.getElementById('password').value;
+            const errorEl = document.getElementById('errorMessage');
+            const successEl = document.getElementById('successMessage');
+            
+            errorEl.style.display = 'none';
+            successEl.style.display = 'none';
+            
+            try {
+                window.showStatus('Attempting login...', 'info');
+                
+                const result = await window.dataManager.authenticateUser(id, password);
+                
+                if (result.success) {
+                    window.dataManager.saveCurrentUser(result.user);
+                    successEl.textContent = 'Login successful! Redirecting...';
+                    successEl.style.display = 'block';
+                    window.showStatus(`Welcome ${result.user.name}!`, 'success');
+                    
+                    setTimeout(() => {
+                        if (result.user.role === 'lecturer') {
+                            window.location.href = 'lecturer-dashboard.html';
+                        } else {
+                            window.location.href = 'dashboard.html';
+                        }
+                    }, 1500);
+                } else {
+                    errorEl.textContent = result.error || 'Invalid credentials';
+                    errorEl.style.display = 'block';
+                    window.showStatus(`Login failed: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                errorEl.textContent = `Error: ${error.message}`;
+                errorEl.style.display = 'block';
+                window.showStatus(`System error: ${error.message}`, 'error');
+            }
+        });
+
+        // ============================================
+        // INITIALIZATION
+        // ============================================
+        window.addEventListener('load', function() {
+            console.log('=== SYSTEM STATUS ===');
+            console.log('Supabase:', window.supabaseClient ? '✅' : '❌');
+            console.log('DatabaseManager:', window.dbManager ? '✅' : '❌');
+            console.log('DataManager:', window.dataManager ? '✅' : '❌');
+            
+            window.showStatus('System ready. Click "Test DB" to verify connection.', 'info');
+            
+            // Auto-test connection
+            setTimeout(() => {
+                window.testConnection();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

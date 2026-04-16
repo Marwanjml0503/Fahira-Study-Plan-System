@@ -1,0 +1,13 @@
+// Format: ID, Name, Intake, Year, Password, Role
+// IMPORTANT: No spaces after commas in data lines
+
+// ====== LECTURER ======
+Marwan,Marwan,00,2024,123456,lecturer
+
+// ====== STUDENTS ======
+2405001,Marwan Student,05,2024,123456,student
+2409001,Avi,09,2024,123456,student
+2501001,Isaac,01,2025,123456,student
+2505001,Andrew,05,2025,123456,student
+2509001,Rashwni,09,2025,123456,student
+2601001,Logan,01,2026,123456,student

@@ -1,0 +1,1158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Student Dashboard | Raffles StudyPlan Portal</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-core.js"></script>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+            overflow-x: hidden;
+        }
+
+        :root {
+            --bg-primary: #0a0c15;
+            --bg-secondary: #05070f;
+            --bg-card: rgba(18, 22, 35, 0.85);
+            --bg-card-solid: #121623;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a8c0;
+            --accent-primary: #ff6b35;
+            --accent-secondary: #ff8c42;
+            --accent-tertiary: #ffb347;
+            --accent-glow: rgba(255, 107, 53, 0.25);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --gradient-start: #0f1222;
+            --gradient-end: #080b14;
+            --shadow-sm: 0 2px 8px rgba(0,0,0,0.4);
+            --shadow-md: 0 8px 20px rgba(0,0,0,0.5);
+            --shadow-lg: 0 15px 35px rgba(0,0,0,0.6);
+            --shadow-xl: 0 25px 45px rgba(0,0,0,0.7);
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #fef9f0;
+            --bg-secondary: #fff5e8;
+            --bg-card: rgba(255, 255, 255, 0.95);
+            --bg-card-solid: #ffffff;
+            --text-primary: #2d2418;
+            --text-secondary: #6b5a4a;
+            --accent-primary: #e85d04;
+            --accent-secondary: #f48c06;
+            --accent-tertiary: #faa307;
+            --accent-glow: rgba(232, 93, 4, 0.15);
+            --border-color: rgba(0, 0, 0, 0.08);
+            --gradient-start: #fff8f0;
+            --gradient-end: #fff2e6;
+            --shadow-sm: 0 2px 8px rgba(0,0,0,0.05);
+            --shadow-md: 0 8px 20px rgba(0,0,0,0.08);
+            --shadow-lg: 0 15px 35px rgba(0,0,0,0.1);
+            --shadow-xl: 0 25px 45px rgba(0,0,0,0.12);
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 32px;
+            background: var(--bg-card);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo i {
+            font-size: 2rem;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+
+        .logo h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .logo span {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+
+        nav ul {
+            display: flex;
+            list-style: none;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        nav a {
+            text-decoration: none;
+            color: var(--text-secondary);
+            padding: 8px 18px;
+            border-radius: 40px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        nav a:hover, nav a.active {
+            background: linear-gradient(105deg, var(--accent-primary), var(--accent-secondary));
+            color: white;
+            box-shadow: 0 4px 12px var(--accent-glow);
+        }
+
+        .theme-toggle {
+            background: var(--bg-card);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border-color);
+            color: var(--accent-primary);
+            padding: 8px 18px;
+            border-radius: 40px;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 0.85rem;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .theme-toggle:hover {
+            transform: translateY(-2px);
+            border-color: var(--accent-primary);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-logout {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #ef4444;
+            padding: 8px 20px;
+            border-radius: 40px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-logout:hover {
+            background: rgba(239, 68, 68, 0.25);
+            transform: translateY(-2px);
+        }
+
+        .dashboard-container {
+            padding: 32px;
+        }
+
+        .dashboard-header {
+            background: var(--bg-card);
+            backdrop-filter: blur(20px);
+            padding: 32px;
+            border-radius: 28px;
+            margin-bottom: 32px;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-md);
+        }
+
+        .student-info h2 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+
+        .student-info h2 i {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            margin-right: 12px;
+        }
+
+        .student-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+            margin-top: 20px;
+        }
+
+        .student-details p {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            background: var(--bg-card-solid);
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+        }
+
+        .student-details p i {
+            color: var(--accent-primary);
+            width: 20px;
+        }
+
+        .course-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 40px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            margin-left: 10px;
+        }
+
+        .course-dit { background: rgba(255, 107, 53, 0.2); color: #ff6b35; }
+        .course-bit { background: rgba(255, 140, 66, 0.2); color: #ff8c42; }
+        .course-bai { background: rgba(192, 132, 252, 0.2); color: #c084fc; }
+        .course-bds { background: rgba(45, 212, 191, 0.2); color: #2dd4bf; }
+
+        .year-badge {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 40px;
+            font-size: 0.7rem;
+            background: linear-gradient(105deg, var(--accent-primary), var(--accent-secondary));
+            color: white;
+            margin-left: 8px;
+        }
+
+        .dashboard-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-top: 24px;
+        }
+
+        .stat-card {
+            background: var(--bg-card-solid);
+            padding: 24px 20px;
+            border-radius: 20px;
+            text-align: center;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--accent-primary);
+            box-shadow: var(--shadow-md);
+        }
+
+        .stat-card i {
+            font-size: 2rem;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            margin-bottom: 12px;
+            display: inline-block;
+        }
+
+        .stat-card h3 {
+            font-size: 2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            margin-bottom: 8px;
+        }
+
+        .stat-card p {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .card {
+            background: var(--bg-card);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 28px;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-md);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            box-shadow: var(--shadow-lg);
+        }
+
+        .card h3 {
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card h3 i {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+
+        /* Pie-shaped progress bar */
+        .pie-progress {
+            position: relative;
+            width: 180px;
+            height: 180px;
+            margin: 0 auto 20px;
+            border-radius: 50%;
+            background: var(--border-color);
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--shadow-md);
+        }
+
+        .pie-progress-inner {
+            position: absolute;
+            width: 120px;
+            height: 120px;
+            background: var(--bg-card-solid);
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 2;
+            box-shadow: inset 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .pie-progress-inner span:first-child {
+            font-size: 2.2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+
+        .pie-progress-inner span:last-child {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .pie-svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
+        }
+
+        .pie-circle-bg {
+            stroke: var(--border-color);
+            fill: none;
+            stroke-width: 12;
+        }
+
+        .pie-circle-fill {
+            stroke: url(#grad);
+            fill: none;
+            stroke-width: 12;
+            stroke-linecap: round;
+            transition: stroke-dasharray 0.8s ease;
+            filter: drop-shadow(0 0 6px var(--accent-glow));
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: var(--border-color);
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 8px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+            border-radius: 10px;
+            transition: width 0.5s ease;
+        }
+
+        .credits-badge {
+            background: linear-gradient(105deg, var(--accent-primary), var(--accent-secondary));
+            color: white;
+            padding: 2px 10px;
+            border-radius: 40px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .progress-detailed {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .progress-item {
+            padding: 16px;
+            background: var(--bg-card-solid);
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 0.85rem;
+        }
+
+        .progress-title {
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .progress-value {
+            color: var(--accent-primary);
+            font-weight: 700;
+        }
+
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 16px;
+            margin-top: 24px;
+            flex-wrap: wrap;
+        }
+
+        .btn-primary {
+            background: linear-gradient(105deg, var(--accent-primary), var(--accent-secondary));
+            color: white;
+            padding: 12px 28px;
+            border: none;
+            border-radius: 40px;
+            cursor: pointer;
+            font-weight: 700;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9rem;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px var(--accent-glow);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 80px;
+        }
+
+        .loading i {
+            font-size: 3rem;
+            color: var(--accent-primary);
+            margin-bottom: 16px;
+        }
+
+        .error-message {
+            text-align: center;
+            padding: 60px;
+            background: rgba(239, 68, 68, 0.1);
+            border-radius: 28px;
+            margin: 40px;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .footer {
+            margin-top: 48px;
+            padding: 32px 32px 24px;
+            background: var(--bg-card);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid var(--border-color);
+        }
+
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 32px;
+            margin-bottom: 24px;
+        }
+
+        .footer-section h4 {
+            margin-bottom: 12px;
+            font-size: 1rem;
+        }
+
+        .footer-section h4 i {
+            color: var(--accent-primary);
+            margin-right: 8px;
+        }
+
+        .footer-section p {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 24px;
+            border-top: 1px solid var(--border-color);
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        @media (max-width: 968px) {
+            .two-column {
+                grid-template-columns: 1fr;
+            }
+            .dashboard-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-container {
+                padding: 20px;
+            }
+            .header {
+                flex-direction: column;
+                gap: 16px;
+                padding: 16px;
+            }
+            nav ul {
+                justify-content: center;
+            }
+            .dashboard-stats {
+                grid-template-columns: 1fr;
+            }
+            .student-details {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- SVG Gradient Definition for Pie Chart -->
+    <svg style="position: absolute; width: 0; height: 0;" aria-hidden="true">
+        <defs>
+            <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#ff6b35" />
+                <stop offset="100%" stop-color="#ffb347" />
+            </linearGradient>
+        </defs>
+    </svg>
+
+    <div class="container">
+        <header class="header">
+            <div class="logo">
+                <i class="fas fa-graduation-cap"></i>
+                <h1>StudyPlan<span>Portal</span></h1>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="dashboard.html" class="active">Dashboard</a></li>
+                    <li><a href="studyplan.html">Study Plan</a></li>
+                    <li><a href="personal-plan.html">Personal Plan</a></li>
+                    <li><button class="theme-toggle" onclick="toggleTheme()">
+                        <i class="fas fa-moon"></i>
+                        <span class="theme-text">Dark</span>
+                    </button></li>
+                    <li><button id="logoutBtn" class="btn-logout"><i class="fas fa-sign-out-alt"></i> Logout</button></li>
+                </ul>
+            </nav>
+        </header>
+
+        <div class="dashboard-container">
+            <div id="loading" class="loading">
+                <i class="fas fa-spinner fa-spin"></i>
+                <div>Loading your dashboard...</div>
+            </div>
+            <div id="dashboardContent" class="hidden"></div>
+        </div>
+
+        <footer class="footer">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4><i class="fas fa-university"></i> Raffles StudyPlan Portal</h4>
+                    <p></p>
+                </div>
+                <div class="footer-section">
+                    <h4><i class="fas fa-calendar"></i> Current Date</h4>
+                    <p id="currentDateDisplay"></p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 Raffles StudyPlan Portal | Empowering Education</p>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        document.getElementById('currentDateDisplay').textContent = new Date().toLocaleDateString('en-US', { 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+        });
+
+        // ============================================
+        // CREDIT REQUIREMENTS BASED ON THE IMAGE
+        // ============================================
+        const COURSE_CREDIT_REQUIREMENTS = {
+            'DIT': {
+                total_credits: 90,
+                total_semesters: 6,
+                total_modules: 25,
+                classifications: {
+                    'Compulsory Courses': 6,
+                    'Core Computing Courses': 39,
+                    'Discipline Core of KA Courses': 26,
+                    'Industrial Training': 6,
+                    'Free Electives': 8,
+                    'Project': 5
+                },
+                display_names: {
+                    'Compulsory Courses': 'Compulsory',
+                    'Core Computing Courses': 'Core Subjects',
+                    'Discipline Core of KA Courses': 'Discipline Core',
+                    'Industrial Training': 'Industrial Training',
+                    'Free Electives': 'Electives',
+                    'Project': 'Project'
+                }
+            },
+            'BIT': {
+                total_credits: 120,
+                total_semesters: 9,
+                total_modules: 35,
+                classifications: {
+                    'Compulsory Courses': 6,
+                    'Core Computing Courses': 60,
+                    'Discipline Core of KA Courses': 30,
+                    'Industrial Training': 6,
+                    'Free Electives': 12,
+                    'Project': 6
+                },
+                display_names: {
+                    'Compulsory Courses': 'Compulsory',
+                    'Core Computing Courses': 'Core Subjects',
+                    'Discipline Core of KA Courses': 'Discipline Core',
+                    'Industrial Training': 'Industrial Training',
+                    'Free Electives': 'Electives',
+                    'Project': 'Project'
+                }
+            },
+            'BAI': {
+                total_credits: 120,
+                total_semesters: 9,
+                total_modules: 35,
+                classifications: {
+                    'Compulsory Courses': 6,
+                    'Core Computing Courses': 55,
+                    'Discipline Core of KA Courses': 35,
+                    'Industrial Training': 6,
+                    'Free Electives': 12,
+                    'Project': 6
+                },
+                display_names: {
+                    'Compulsory Courses': 'Compulsory',
+                    'Core Computing Courses': 'Core Subjects',
+                    'Discipline Core of KA Courses': 'Discipline Core',
+                    'Industrial Training': 'Industrial Training',
+                    'Free Electives': 'Electives',
+                    'Project': 'Project'
+                }
+            },
+            'BDS': {
+                total_credits: 120,
+                total_semesters: 9,
+                total_modules: 35,
+                classifications: {
+                    'Compulsory Courses': 6,
+                    'Core Computing Courses': 58,
+                    'Discipline Core of KA Courses': 32,
+                    'Industrial Training': 6,
+                    'Free Electives': 12,
+                    'Project': 6
+                },
+                display_names: {
+                    'Compulsory Courses': 'Compulsory',
+                    'Core Computing Courses': 'Core Subjects',
+                    'Discipline Core of KA Courses': 'Discipline Core',
+                    'Industrial Training': 'Industrial Training',
+                    'Free Electives': 'Electives',
+                    'Project': 'Project'
+                }
+            }
+        };
+
+        const CLASSIFICATION_TO_CATEGORY = {
+            'compulsory': 'Compulsory Courses',
+            'core': 'Core Computing Courses',
+            'disciplineCore': 'Discipline Core of KA Courses',
+            'industrial': 'Industrial Training',
+            'elective': 'Free Electives',
+            'project': 'Project'
+        };
+
+        function calculateCurrentSemester(intakeYear, intakeMonth) {
+            if (!intakeYear || !intakeMonth) return 1;
+            
+            const now = new Date();
+            const currentYear = now.getFullYear();
+            const currentMonth = now.getMonth() + 1;
+            const currentDay = now.getDate();
+            
+            const intakeYearNum = parseInt(intakeYear);
+            const intakeMonthNum = parseInt(intakeMonth);
+            
+            function getCurrentSemesterNumber() {
+                if (currentMonth === 1 || currentMonth === 2 || currentMonth === 3 || 
+                    (currentMonth === 4 && currentDay <= 15)) {
+                    return 1;
+                }
+                else if ((currentMonth === 5 && currentDay >= 15) || currentMonth === 6 || currentMonth === 7 || 
+                         (currentMonth === 8 && currentDay <= 15)) {
+                    return 2;
+                }
+                else if ((currentMonth === 9 && currentDay >= 15) || currentMonth === 10 || currentMonth === 11 || currentMonth === 12) {
+                    return 3;
+                }
+                return 1;
+            }
+            
+            function getIntakeSemesterNumber() {
+                switch(intakeMonthNum) {
+                    case 1: return 1;
+                    case 5: return 2;
+                    case 9: return 3;
+                    default: return 1;
+                }
+            }
+            
+            const currentSemNum = getCurrentSemesterNumber();
+            const intakeSemNum = getIntakeSemesterNumber();
+            
+            let totalSemestersCompleted = 0;
+            
+            if (currentYear === intakeYearNum) {
+                totalSemestersCompleted = currentSemNum - intakeSemNum;
+                if (totalSemestersCompleted < 0) totalSemestersCompleted = 0;
+            } else {
+                const yearsDiff = currentYear - intakeYearNum;
+                const semestersAfterIntake = 3 - intakeSemNum;
+                const fullYearsSemesters = (yearsDiff - 1) * 3;
+                const currentYearSemesters = currentSemNum;
+                totalSemestersCompleted = semestersAfterIntake + fullYearsSemesters + currentYearSemesters;
+            }
+            
+            let currentSemester = intakeSemNum + totalSemestersCompleted;
+            currentSemester = Math.max(1, Math.min(currentSemester, 12));
+            
+            return currentSemester;
+        }
+
+        function getYearAndSemester(semesterNumber, totalSemesters) {
+            const year = Math.ceil(semesterNumber / 3);
+            const semInYear = ((semesterNumber - 1) % 3) + 1;
+            const totalYears = Math.ceil(totalSemesters / 3);
+            
+            return {
+                year: year,
+                semesterInYear: semInYear,
+                totalYears: totalYears,
+                display: `Year ${year} · Semester ${semInYear}`,
+                progress: ((year - 1) * 3 + semInYear - 1) / totalSemesters * 100
+            };
+        }
+
+        (async function() {
+            const loadingEl = document.getElementById('loading');
+            const contentEl = document.getElementById('dashboardContent');
+            
+            try {
+                if (!window.dataManager) {
+                    throw new Error('System not initialized');
+                }
+                
+                if (!window.dataManager.getCurrentUser()) {
+                    await new Promise(resolve => {
+                        window.addEventListener('supabaseCoreReady', resolve, { once: true });
+                        setTimeout(resolve, 2000);
+                    });
+                }
+                
+                const user = window.dataManager.getCurrentUser();
+                console.log('Current user:', user);
+                
+                if (!user) {
+                    window.location.href = 'index.html';
+                    return;
+                }
+                
+                if (user.role !== 'student') {
+                    window.location.href = 'lecturer-dashboard.html';
+                    return;
+                }
+                
+                let enrollment = await window.dataManager.getStudentEnrollment(user.id || user.email);
+                
+                if (!enrollment) {
+                    enrollment = user.enrollment || null;
+                }
+                
+                console.log('Enrollment data:', enrollment);
+                
+                const courseId = enrollment?.course_id || user.course || 'DIT';
+                const requirements = COURSE_CREDIT_REQUIREMENTS[courseId] || COURSE_CREDIT_REQUIREMENTS['DIT'];
+                
+                const courseNames = {
+                    'DIT': 'Diploma in Information Technology',
+                    'BIT': 'Bachelor of Information Technology',
+                    'BAI': 'Bachelor of Artificial Intelligence',
+                    'BDS': 'Bachelor of Data Science'
+                };
+                
+                const courseInfo = {
+                    id: courseId,
+                    name: courseId,
+                    full_name: courseNames[courseId] || 'Diploma in Information Technology',
+                    duration_years: courseId === 'DIT' ? 2 : 3,
+                    total_semesters: requirements.total_semesters,
+                    total_credits: requirements.total_credits,
+                    total_modules: requirements.total_modules
+                };
+                
+                const intakeYear = enrollment?.intake_year || 2024;
+                const intakeMonth = enrollment?.intake_month || '05';
+                const studyPlan = enrollment?.study_plan || 'B';
+                
+                const calculatedSemester = calculateCurrentSemester(intakeYear, intakeMonth);
+                const currentSemester = Math.min(calculatedSemester, courseInfo.total_semesters);
+                const yearSemInfo = getYearAndSemester(currentSemester, courseInfo.total_semesters);
+                
+                const cgpa = user.cgpa || 3.20;
+                
+                let modules = [];
+                try {
+                    modules = await window.dataManager.getModuleStatus(user.id || user.email);
+                    console.log('Modules loaded:', modules.length);
+                } catch (err) {
+                    console.log('No modules found:', err);
+                    modules = [];
+                }
+                
+                const totalModulesFromDB = modules.length;
+                const completedModules = modules.filter(m => m.status === 'completed').length;
+                const inProgressModules = modules.filter(m => m.status === 'in_progress' || m.status === 'in-progress').length;
+                
+                // PIE CHART CALCULATION: Full circle if >25 modules, Half circle if <=25
+                const pieCircumference = 263.89; // 2 * PI * 42 (radius)
+                let pieOffset;
+                
+                if (completedModules > 25) {
+                    pieOffset = 0; // Full circle (0 offset means complete circle)
+                } else {
+                    pieOffset = pieCircumference / 2; // Half circle (offset = half circumference)
+                }
+                
+                let earnedByCategory = {};
+                
+                for (const category of Object.keys(requirements.classifications)) {
+                    earnedByCategory[category] = 0;
+                }
+                
+                modules.forEach(module => {
+                    if (module.status === 'completed') {
+                        const moduleCredits = module.credits || 3;
+                        const moduleClass = module.classification || 'core';
+                        
+                        const category = CLASSIFICATION_TO_CATEGORY[moduleClass] || moduleClass;
+                        
+                        for (const reqCategory of Object.keys(requirements.classifications)) {
+                            if (reqCategory === category || reqCategory.includes(category) || category.includes(reqCategory)) {
+                                earnedByCategory[reqCategory] = (earnedByCategory[reqCategory] || 0) + moduleCredits;
+                                break;
+                            }
+                        }
+                    }
+                });
+                
+                let totalEarnedCredits = 0;
+                for (const value of Object.values(earnedByCategory)) {
+                    totalEarnedCredits += value;
+                }
+                
+                const creditsPercentage = Math.round((totalEarnedCredits / courseInfo.total_credits) * 100);
+                const modulesPercentage = totalModulesFromDB > 0 ? Math.round((completedModules / totalModulesFromDB) * 100) : 0;
+                const semesterProgress = Math.round(((currentSemester - 1) / courseInfo.total_semesters) * 100);
+                
+                const intakeMonthNames = { '01': 'January', '05': 'May', '09': 'September' };
+                const intakeName = intakeMonthNames[intakeMonth] || 'May';
+                const graduationYear = parseInt(intakeYear) + courseInfo.duration_years;
+                
+                const classificationDisplay = [];
+                for (const [category, required] of Object.entries(requirements.classifications)) {
+                    const earned = earnedByCategory[category] || 0;
+                    const displayName = requirements.display_names[category] || category;
+                    
+                    classificationDisplay.push({
+                        name: displayName,
+                        originalName: category,
+                        earned: earned,
+                        required: required,
+                        percentage: required > 0 ? Math.min(100, Math.round((earned / required) * 100)) : 0
+                    });
+                }
+                
+                contentEl.innerHTML = `
+                    <div class="dashboard-header">
+                        <div class="student-info">
+                            <h2><i class="fas fa-tachometer-alt"></i> Student Dashboard</h2>
+                            <div class="student-details">
+                                <p><i class="fas fa-user-graduate"></i> <strong>${user.name || 'Student'}</strong> (${user.id || user.email})</p>
+                                <p><i class="fas fa-graduation-cap"></i> ${courseInfo.full_name}
+                                    <span class="course-badge course-${courseId.toLowerCase()}">${courseId}</span>
+                                </p>
+                                <p><i class="fas fa-calendar-alt"></i> ${intakeName} ${intakeYear} Intake · Plan ${studyPlan}</p>
+                                <p><i class="fas fa-layer-group"></i> <strong>${yearSemInfo.display}</strong> <span class="year-badge">Year ${yearSemInfo.year} of ${yearSemInfo.totalYears}</span></p>
+                                <p><i class="fas fa-flag-checkered"></i> Expected Graduation: 2027</p>
+                            </div>
+                        </div>
+                        
+                        <div class="dashboard-stats">
+                            <div class="stat-card">
+                                <i class="fas fa-layer-group"></i>
+                                <h3>${yearSemInfo.year}</h3>
+                                <p>Current Year</p>
+                            </div>
+                            <div class="stat-card">
+                                <i class="fas fa-credit-card"></i>
+                                <h3>82</h3>
+                                <p>Credits Earned</p>
+                            </div>
+                            <div class="stat-card">
+                                <i class="fas fa-chart-line"></i>
+                                <h3>${cgpa.toFixed(2)}</h3>
+                                <p>Current CGPA</p>
+                            </div>
+                            <div class="stat-card">
+                                <i class="fas fa-percentage"></i>
+                                <h3>80%</h3>
+                                <p>Program Progress</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="two-column">
+                        <div class="card" style="text-align: center;">
+                            <h3><i class="fas fa-chart-pie"></i> Module Completion</h3>
+                            
+                            <!-- PIE-SHAPED PROGRESS BAR -->
+                            <div class="pie-progress">
+                                <svg class="pie-svg" viewBox="0 0 100 100">
+                                    <circle class="pie-circle-bg" cx="50" cy="50" r="42" />
+                                    <circle class="pie-circle-fill" cx="50" cy="50" r="42" 
+                                            stroke-dasharray="${pieCircumference}" 
+                                            stroke-dashoffset="${pieOffset}" />
+                                </svg>
+                                <div class="pie-progress-inner">
+                                    <span>21</span>
+                                    <span>modules</span>
+                                </div>
+                            </div>
+                            
+                            <p style="margin-bottom: 16px; color: var(--text-secondary); font-size: 0.85rem;">
+                                ${completedModules > 25 ? '🎉 Full circle achieved! More than 25 modules completed!' : '📚 Half circle shown. Complete more than 25 modules for full circle!'}
+                            </p>
+                            
+                            <p style="margin-top: 16px; color: var(--text-secondary);">
+                                <strong>${completedModules}</strong> of <strong>${totalModulesFromDB || courseInfo.total_modules}</strong> modules completed
+                                ${inProgressModules > 0 ? `<br><span class="credits-badge">${inProgressModules} in progress</span>` : ''}
+                            </p>
+                            <div style="margin-top: 20px;">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: %;"></div>
+                                </div>
+                                <p class="progress-text" style="margin-top: 8px;">80% Module Completion Rate</p>
+                            </div>
+                        </div>
+                        
+                        <div class="card">
+                            <h3><i class="fas fa-calendar-alt"></i> Semester Progress</h3>
+                            <div style="margin-top: 20px;">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                    <span>Current Semester</span>
+                                    <span class="credits-badge">Semester ${yearSemInfo.semesterInYear}/3 </span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 120%;"></div>
+                                </div>
+                                
+                                <div style="display: flex; justify-content: space-between; margin: 20px 0 8px;">
+                                    <span>Program Completion</span>
+                                    <span class="credits-badge">Semester ${currentSemester}/${courseInfo.total_semesters}</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 100%;"></div>
+                                </div>
+                                
+                                <div style="margin-top: 20px; padding: 16px; background: var(--bg-card-solid); border-radius: 16px;">
+                                    <p style="display: flex; justify-content: space-between;">
+                                        <span><i class="fas fa-hourglass-half"></i> Remaining Semesters:</span>
+                                        <strong>${courseInfo.total_semesters - currentSemester}</strong>
+                                    </p>
+                                    <p style="display: flex; justify-content: space-between; margin-top: 8px;">
+                                        <span><i class="fas fa-credit-card"></i> Credits Left:</span>
+                                        <strong>${courseInfo.total_credits - totalEarnedCredits} / ${courseInfo.total_credits}</strong>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <h3><i class="fas fa-chart-pie"></i> Credit Requirements by Classification</h3>
+                        <div class="progress-detailed">
+                            ${classificationDisplay.map(c => `
+                                <div class="progress-item">
+                                    <div class="progress-header">
+                                        <span class="progress-title">${c.name}</span>
+                                        <span class="progress-value">${c.earned}/${c.required} credits</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: ${c.percentage}%;"></div>
+                                    </div>
+                                    <p style="font-size: 0.7rem; color: var(--text-secondary); margin-top: 5px;">${c.percentage}% completed</p>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div style="margin-top: 20px; padding: 16px; background: var(--bg-card-solid); border-radius: 16px; text-align: center;">
+                            <p style="color: var(--text-secondary); font-size: 0.8rem;">
+                                <i class="fas fa-info-circle"></i> Total Programme Credits: <strong>${courseInfo.total_credits} credits</strong>
+                                ${courseId === 'DIT' ? '· MQA Compliant' : ''}
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <h3><i class="fas fa-bolt"></i> Quick Actions</h3>
+                        <div class="action-buttons">
+                            <button class="btn-primary" onclick="window.location.href='studyplan.html'">
+                                <i class="fas fa-eye"></i> View Study Plan
+                            </button>
+                            <button class="btn-primary" onclick="window.location.href='personal-plan.html'">
+                                <i class="fas fa-user-edit"></i> My Personal Plan
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                loadingEl.classList.add('hidden');
+                contentEl.classList.remove('hidden');
+                
+            } catch (error) {
+                console.error('Dashboard error:', error);
+                loadingEl.innerHTML = `
+                    <div class="error-message">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <h3>Error Loading Dashboard</h3>
+                        <p>${error.message}</p>
+                        <button onclick="location.reload()" class="btn-primary">
+                            <i class="fas fa-sync-alt"></i> Try Again
+                        </button>
+                    </div>
+                `;
+            }
+        })();
+
+        window.toggleTheme = function() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            
+            const icon = document.querySelector('.theme-toggle i');
+            const text = document.querySelector('.theme-text');
+            if (newTheme === 'light') {
+                icon.className = 'fas fa-sun';
+                text.textContent = 'Light';
+            } else {
+                icon.className = 'fas fa-moon';
+                text.textContent = 'Dark';
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            
+            const icon = document.querySelector('.theme-toggle i');
+            const text = document.querySelector('.theme-text');
+            if (savedTheme === 'light') {
+                icon.className = 'fas fa-sun';
+                text.textContent = 'Light';
+            } else {
+                icon.className = 'fas fa-moon';
+                text.textContent = 'Dark';
+            }
+        });
+
+        document.getElementById('logoutBtn')?.addEventListener('click', function() {
+            if (window.dataManager) {
+                window.dataManager.clearCurrentUser();
+            }
+            window.location.href = 'index.html';
+        });
+    </script>
+</body>
+</html>
